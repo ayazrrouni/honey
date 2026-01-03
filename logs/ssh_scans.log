@@ -1,0 +1,2 @@
+2026-01-02 17:56:53.844564 IP=127.0.0.1 ERROR=[Errno 2] No such file or directory: '/home/kali/honeypot/core/fake_fs.json'
+2026-01-02 17:57:09.006516 IP=127.0.0.1 ERROR=[Errno 2] No such file or directory: '/home/kali/honeypot/core/fake_fs.json'

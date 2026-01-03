@@ -1,20 +1,26 @@
 import socket
 import threading
+import logging
 import paramiko
-import time
+
 from core.fake_shell import handle_command
 
 HOST = "0.0.0.0"
 PORT = 2222
+HOST_KEY = "ssh_host_key"
 
-# Generate SSH host key (honeypot)
-host_key = paramiko.RSAKey.generate(2048)
+logging.basicConfig(
+    level=logging.INFO,
+    format='[%(asctime)s] %(levelname)s: %(message)s'
+)
 
+class FakeSSHServer(paramiko.ServerInterface):
 
-class SSHServer(paramiko.ServerInterface):
+    def __init__(self):
+        self.event = threading.Event()
 
     def check_auth_password(self, username, password):
-        log_attack("LOGIN", f"{username}:{password}")
+        logging.info(f"[SSH] Login attempt: {username}:{password}")
         return paramiko.AUTH_SUCCESSFUL
 
     def get_allowed_auths(self, username):
@@ -25,88 +31,76 @@ class SSHServer(paramiko.ServerInterface):
             return paramiko.OPEN_SUCCEEDED
         return paramiko.OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
 
-    def check_channel_pty_request(
-        self, channel, term, width, height, pixelwidth, pixelheight, modes
-    ):
-        return True
-
     def check_channel_shell_request(self, channel):
+        self.event.set()
         return True
 
+    # 🔴 رفض PTY بشكل صريح
+    def check_channel_pty_request(
+        self,
+        channel,
+        term,
+        width,
+        height,
+        pixelwidth,
+        pixelheight,
+        modes
+    ):
+        return False
 
-def log_attack(action, detail):
-    with open("logs/attacks.log", "a") as f:
-        f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] SSH | {action} | {detail}\n")
 
+def handle_client(client, addr):
+    logging.info(f"[SSH] Connection from {addr[0]}")
+    transport = paramiko.Transport(client)
+    transport.add_server_key(paramiko.RSAKey(filename=HOST_KEY))
 
-def handle_client(client):
-    try:
-        transport = paramiko.Transport(client)
-        transport.add_server_key(host_key)
-        transport.local_version = "SSH-2.0-OpenSSH_8.9p1 Ubuntu-3"
+    server = FakeSSHServer()
+    transport.start_server(server=server)
 
-        server = SSHServer()
-        transport.start_server(server=server)
+    chan = transport.accept(20)
+    if chan is None:
+        return
 
-        chan = transport.accept(20)
-        if chan is None:
-            return
+    server.event.wait(10)
 
-        chan.send("Welcome to Ubuntu 22.04 LTS\r\n")
-        chan.send("root@ubuntu:~# ")
+    session = {"user": "test"}
 
-        buffer = ""
+    # ✨ نطبع البرومبت مرة وحدة وبشكل نظيف
+    from core.fake_shell import FakeShell
+    shell = FakeShell(session["user"])
+    session["shell"] = shell
+    chan.send(shell.prompt())
 
-        while True:
-            data = chan.recv(1)
-            if not data:
+    while True:
+        try:
+            cmd = chan.recv(1024).decode().strip()
+            if not cmd:
+                continue
+
+            logging.info(f"[SSH] {addr[0]} command: {cmd}")
+
+            output, should_exit = handle_command(cmd, session)
+            if should_exit:
                 break
 
-            char = data.decode("utf-8", errors="ignore")
+            chan.send(output)
+            chan.send(shell.prompt())
 
-            # Enter key
-            if char in ("\r", "\n"):
-                chan.send("\r\n")
-                cmd = buffer.strip()
-                buffer = ""
+        except Exception:
+            break
 
-                if cmd:
-                    log_attack("CMD", cmd)
-                    output = handle_command(cmd)
-                    chan.send(output)
-
-                    if cmd in ["exit", "logout"]:
-                        break
-
-                chan.send("root@ubuntu:~# ")
-
-            # Backspace
-            elif char == "\x7f":
-                if buffer:
-                    buffer = buffer[:-1]
-                    chan.send("\b \b")
-
-            # Normal character (echo)
-            else:
-                buffer += char
-                chan.send(char)
-
-        chan.close()
-        transport.close()
-
-    except Exception as e:
-        print(f"[!] SSH client error: {e}")
+    chan.close()
+    transport.close()
 
 
 def start_ssh():
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     sock.bind((HOST, PORT))
     sock.listen(100)
-
-    print("[+] SSH Honeypot listening on port 2222")
+    logging.info(f"[+] SSH honeypot listening on port {PORT}")
 
     while True:
         client, addr = sock.accept()
-        threading.Thread(target=handle_client, args=(client,), daemon=True).start()
-
+        t = threading.Thread(target=handle_client, args=(client, addr))
+        t.daemon = True
+        t.start()

@@ -1,77 +1,72 @@
 import socket
 import threading
-import time
-import os
+from datetime import datetime
 
-HOST = "0.0.0.0"
-PORT = 21
-LOG_FILE = "logs/attacks.log"
+LOG_FILE = "./logs/attacks.log"
 
-
-def log_attack(action, detail):
-    os.makedirs("logs", exist_ok=True)
+def log_event(ip, msg):
     with open(LOG_FILE, "a") as f:
-        f.write(f"{time.ctime()} | FTP | {action} | {detail}\n")
-
+        f.write(f"{datetime.now()} - {ip} - {msg}\n")
 
 def handle_client(conn, addr):
-    ip = addr[0]
-    conn.send(b"220 FTP Server Ready\r\n")
-
-    username = ""
-    password = ""
+    log_event(addr[0], "FTP connection opened")
 
     try:
+        conn.send(b"220 (vsFTPd 2.3.4)\r\n")
+
         while True:
             data = conn.recv(1024)
             if not data:
                 break
 
-            command = data.decode(errors="ignore").strip()
-            log_attack("COMMAND", f"IP={ip} CMD={command}")
+            cmd = data.decode(errors="ignore").strip()
+            log_event(addr[0], f"FTP CMD: {cmd}")
 
-            if command.upper().startswith("USER"):
-                username = command.split(" ", 1)[1] if " " in command else ""
-                log_attack("USERNAME", f"IP={ip} USER={username}")
-                conn.send(b"331 Username OK, need password\r\n")
+            # USER
+            if cmd.upper().startswith("USER"):
+                username = cmd.split(" ", 1)[1]
 
-            elif command.upper().startswith("PASS"):
-                password = command.split(" ", 1)[1] if " " in command else ""
-                log_attack(
-                    "LOGIN_ATTEMPT",
-                    f"IP={ip} USER={username} PASS={password}"
-                )
-                conn.send(b"530 Login incorrect\r\n")
+                # 🔥 VSFTPD BACKDOOR TRIGGER
+                if ":)" in username:
+                    log_event(addr[0], "VSFTPD backdoor triggered")
 
-            elif command.upper().startswith(("LIST", "RETR", "STOR")):
-                conn.send(b"550 Permission denied\r\n")
+                    from services.ftp_backdoor import start_backdoor_listener
+                    threading.Thread(
+                        target=start_backdoor_listener,
+                        daemon=True
+                    ).start()
 
-            elif command.upper().startswith("QUIT"):
-                conn.send(b"221 Goodbye\r\n")
+                conn.send(b"331 Please specify the password.\r\n")
+
+            # PASS
+            elif cmd.upper().startswith("PASS"):
+                conn.send(b"230 Login successful.\r\n")
+
+            # QUIT
+            elif cmd.upper().startswith("QUIT"):
+                conn.send(b"221 Goodbye.\r\n")
                 break
 
             else:
-                conn.send(b"502 Command not implemented\r\n")
+                conn.send(b"500 Unknown command.\r\n")
 
     except Exception as e:
-        log_attack("ERROR", f"IP={ip} ERR={e}")
+        log_event(addr[0], f"ERROR: {e}")
 
-    conn.close()
-
+    finally:
+        conn.close()
+        log_event(addr[0], "FTP connection closed")
 
 def start_ftp():
-    print("[+] FTP Honeypot listening on port 21")
-
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.bind((HOST, PORT))
+    sock = socket.socket()
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    sock.bind(("0.0.0.0", 21))
     sock.listen(5)
+
+    print("[+] Fake FTP (vsftpd 2.3.4) listening on port 21")
 
     while True:
         conn, addr = sock.accept()
-        thread = threading.Thread(
-            target=handle_client,
-            args=(conn, addr),
-            daemon=True
-        )
-        thread.start()
-
+        t = threading.Thread(target=handle_client, args=(conn, addr))
+        t.daemon = True
+        t.start()
