@@ -1,103 +1,136 @@
-document.addEventListener("DOMContentLoaded", () => {
+let sessionsChart, commandsChart, severityChart;
 
-  if (typeof statsData === "undefined") return;
+/* ===============================
+   INIT CHARTS
+================================ */
+function initCharts(data) {
+  const labels = Object.keys(data);
 
-  const COLORS = {
-    sessions: "#38bdf8",   // light blue
-    commands: "#22c55e",   // cyber green
-    donut1: "#22c55e",
-    donut2: "#38bdf8",
-    donut3: "#2dd4bf"
-  };
-
-  const baseOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        labels: { color: "#e5e7eb" }
-      }
-    },
-    scales: {
-      x: {
-        ticks: { color: "#94a3b8" },
-        grid: { color: "rgba(255,255,255,0.06)" }
+  sessionsChart = new Chart(
+    document.getElementById("sessionsChart"),
+    {
+      type: "line",
+      data: {
+        labels,
+        datasets: [{
+          label: "Sessions",
+          data: labels.map(k => data[k].sessions),
+          borderColor: "#38bdf8",
+          backgroundColor: "rgba(56,189,248,0.3)",
+          borderWidth: 3,
+          fill: true,
+          tension: 0.4
+        }]
       },
-      y: {
-        ticks: { color: "#94a3b8" },
-        grid: { color: "rgba(255,255,255,0.06)" }
-      }
+      options: { responsive:true, maintainAspectRatio:false }
     }
-  };
+  );
 
-  /* ===== Sessions (Light Blue) ===== */
-  new Chart(document.getElementById("sessionsChart"), {
-    type: "line",
-    data: {
-      labels: Object.keys(statsData),
-      datasets: [{
-        label: "Sessions",
-        data: Object.values(statsData).map(s => s.sessions),
-        borderColor: COLORS.sessions,
-        backgroundColor: "rgba(56,189,248,0.3)",
-        pointBackgroundColor: "#ffffff",
-        borderWidth: 3,
-        fill: true,
-        tension: 0.45
-      }]
-    },
-    options: baseOptions
-  });
+  commandsChart = new Chart(
+    document.getElementById("commandsChart"),
+    {
+      type: "line",
+      data: {
+        labels,
+        datasets: [{
+          label: "Commands",
+          data: labels.map(k => data[k].commands),
+          borderColor: "#22c55e",
+          backgroundColor: "rgba(34,197,94,0.3)",
+          borderWidth: 3,
+          fill: true,
+          tension: 0.4
+        }]
+      },
+      options: { responsive:true, maintainAspectRatio:false }
+    }
+  );
 
-  /* ===== Commands (Cyber Green) ===== */
-  new Chart(document.getElementById("commandsChart"), {
-    type: "line",
-    data: {
-      labels: Object.keys(statsData),
-      datasets: [{
-        label: "Commands",
-        data: Object.values(statsData).map(s => s.commands),
-        borderColor: COLORS.commands,
-        backgroundColor: "rgba(34,197,94,0.3)",
-        pointBackgroundColor: "#ffffff",
-        borderWidth: 3,
-        fill: true,
-        tension: 0.45
-      }]
-    },
-    options: baseOptions
-  });
+  severityChart = new Chart(
+    document.getElementById("severityChart"),
+    {
+      type: "doughnut",
+      data: {
+        labels: ["High", "Medium", "Low"],
+        datasets: [{
+          data: [
+            labels.reduce((a,k)=>a+data[k].high,0),
+            labels.reduce((a,k)=>a+data[k].medium,0),
+            labels.reduce((a,k)=>a+data[k].low,0)
+          ],
+          backgroundColor: ["#22c55e", "#38bdf8", "#2dd4bf"]
+        }]
+      },
+      options: { responsive:true, maintainAspectRatio:false }
+    }
+  );
+}
 
-  /* ===== Doughnut (Cyber Palette) ===== */
-  const t1 = Object.values(statsData).reduce((a,b)=>a+b.high,0);
-  const t2 = Object.values(statsData).reduce((a,b)=>a+b.medium,0);
-  const t3 = Object.values(statsData).reduce((a,b)=>a+b.low,0);
+/* ===============================
+   UPDATE NUMBERS (FIXED)
+================================ */
+function updateNumbers(data) {
+  document.querySelectorAll(".chart-container[data-service]").forEach(card => {
+    const svc = card.dataset.service;
+    const value = card.querySelector(".session-count");
+    const circle = card.querySelector(".percentage");
 
-  new Chart(document.getElementById("severityChart"), {
-    type: "doughnut",
-    data: {
-      labels: ["High", "Medium", "Low"],
-      datasets: [{
-        data: [t1, t2, t3],
-        backgroundColor: [
-          COLORS.donut1,
-          COLORS.donut2,
-          COLORS.donut3
-        ],
-        borderWidth: 2,
-        borderColor: "#020617"
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          position: "bottom",
-          labels: { color: "#e5e7eb" }
-        }
-      }
+    if (!data[svc]) return;
+
+    if (value) {
+      value.textContent = data[svc].sessions;
+    }
+
+    if (circle) {
+      circle.textContent = data[svc].commands;
     }
   });
+}
 
+/* ===============================
+   UPDATE CHARTS
+================================ */
+function updateCharts(data) {
+  const labels = Object.keys(data);
+
+  sessionsChart.data.datasets[0].data =
+    labels.map(k => data[k].sessions);
+
+  commandsChart.data.datasets[0].data =
+    labels.map(k => data[k].commands);
+
+  severityChart.data.datasets[0].data = [
+    labels.reduce((a,k)=>a+data[k].high,0),
+    labels.reduce((a,k)=>a+data[k].medium,0),
+    labels.reduce((a,k)=>a+data[k].low,0)
+  ];
+
+  sessionsChart.update();
+  commandsChart.update();
+  severityChart.update();
+}
+
+/* ===============================
+   FETCH LOOP
+================================ */
+function fetchStats() {
+  fetch("/api/stats")
+    .then(r => r.json())
+    .then(data => {
+      updateNumbers(data);
+      updateCharts(data);
+    })
+    .catch(err => console.error("Fetch error:", err));
+}
+
+/* ===============================
+   START
+================================ */
+document.addEventListener("DOMContentLoaded", () => {
+  fetch("/api/stats")
+    .then(r => r.json())
+    .then(data => {
+      initCharts(data);
+      setInterval(fetchStats, 5000); // كل 5 ثواني
+    });
 });

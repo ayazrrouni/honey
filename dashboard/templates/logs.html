@@ -1,7 +1,9 @@
 {% extends "base.html" %}
 {% block content %}
 
-<!-- ===== ACTION BAR (SEARCH + EXPORT) ===== -->
+<!-- ===============================
+     ACTION BAR (SEARCH + EXPORT)
+================================ -->
 <div class="chart-container-wrapper">
   <div class="chart-container table-actions">
 
@@ -19,7 +21,9 @@
   </div>
 </div>
 
-<!-- ===== TABLE ===== -->
+<!-- ===============================
+     LOGS TABLE
+================================ -->
 <div class="chart-container-wrapper">
   <div class="chart-container table-container">
 
@@ -66,6 +70,9 @@
   </div>
 </div>
 
+<!-- ===============================
+     SEARCH + EXPORT JS
+================================ -->
 <script>
 /* SEARCH */
 document.getElementById("searchInput").addEventListener("keyup", function () {
@@ -78,7 +85,7 @@ document.getElementById("searchInput").addEventListener("keyup", function () {
   });
 });
 
-/* EXPORT */
+/* EXPORT CSV */
 function exportTable() {
   let csv = [];
   const rows = document.querySelectorAll("#honeypotTable tr");
@@ -100,6 +107,15 @@ function exportTable() {
   a.download = "honeypot_logs.csv";
   a.click();
 }
+</script>
+
+<!-- ===============================
+     AUTO REFRESH TABLE
+================================ -->
+<script>
+  setTimeout(() => {
+    window.location.reload();
+  }, 7000); // تحديث كل 7 ثواني
 </script>
 
 {% endblock %}

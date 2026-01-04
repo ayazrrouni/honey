@@ -1,7 +1,6 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, jsonify
 from analysis.analyzer import analyze_all
 
-# ✅ لازم يكون هذا قبل routes
 app = Flask(__name__)
 
 @app.route("/")
@@ -24,7 +23,7 @@ def ssh():
     rows = [r for r in rows if r["service"] == "SSH"]
     return render_template(
         "logs.html",
-        title="SSH Attacks",
+        title="SSH Logs",
         rows=rows,
         active="ssh"
     )
@@ -35,7 +34,7 @@ def ftp():
     rows = [r for r in rows if r["service"] == "FTP"]
     return render_template(
         "logs.html",
-        title="FTP Attacks",
+        title="FTP Logs",
         rows=rows,
         active="ftp"
     )
@@ -46,11 +45,16 @@ def http():
     rows = [r for r in rows if r["service"] == "HTTP"]
     return render_template(
         "logs.html",
-        title="HTTP Attacks",
+        title="HTTP Logs",
         rows=rows,
         active="http"
     )
 
-# ✅ هذا ضروري كي تشغل python3 -m dashboard.app
+# ========= API FOR AJAX =========
+@app.route("/api/stats")
+def api_stats():
+    _, stats = analyze_all()
+    return jsonify(stats)
+
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    app.run(debug=True)

@@ -1,49 +1,100 @@
 {% extends "base.html" %}
 {% block content %}
 
-<!-- ===== TOP CARDS ===== -->
+<!-- ===============================
+     TOP STAT CARDS
+================================ -->
 <div class="chart-row three">
 
-  {% for svc, s in stats.items() %}
+  <!-- SSH -->
   <div class="chart-container-wrapper">
-    <div class="chart-container
-      {% if svc == 'SSH' %}card-ssh{% endif %}
-      {% if svc == 'FTP' %}card-ftp{% endif %}
-      {% if svc == 'HTTP' %}card-http{% endif %}
-    ">
+    <div class="chart-container card-ssh" data-service="SSH">
       <div class="chart-info-wrapper">
         <h2>
-          {% if svc == "SSH" %}
-            <i class="fa-solid fa-terminal"></i>
-          {% elif svc == "FTP" %}
-            <i class="fa-solid fa-folder-open"></i>
-          {% elif svc == "HTTP" %}
-            <i class="fa-solid fa-globe"></i>
-          {% endif %}
-          {{ svc }}
+          <i class="fa-solid fa-terminal"></i>
+          SSH
         </h2>
-        <span>{{ s.sessions }}</span>
+        <span class="session-count">{{ stats.SSH.sessions }}</span>
       </div>
 
       <div class="chart-svg">
         <svg viewBox="0 0 36 36">
           <path class="circle-bg"
-            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831"/>
+            d="M18 2.0845
+               a 15.9155 15.9155 0 0 1 0 31.831"/>
           <path class="circle"
-            stroke-dasharray="{{ s.commands }},100"
-            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831"/>
+            stroke-dasharray="{{ stats.SSH.commands }},100"
+            d="M18 2.0845
+               a 15.9155 15.9155 0 0 1 0 31.831"/>
           <text x="18" y="20.35" class="percentage">
-            {{ s.commands }}
+            {{ stats.SSH.commands }}
           </text>
         </svg>
       </div>
     </div>
   </div>
-  {% endfor %}
+
+  <!-- FTP -->
+  <div class="chart-container-wrapper">
+    <div class="chart-container card-ftp" data-service="FTP">
+      <div class="chart-info-wrapper">
+        <h2>
+          <i class="fa-solid fa-folder-open"></i>
+          FTP
+        </h2>
+        <span class="session-count">{{ stats.FTP.sessions }}</span>
+      </div>
+
+      <div class="chart-svg">
+        <svg viewBox="0 0 36 36">
+          <path class="circle-bg"
+            d="M18 2.0845
+               a 15.9155 15.9155 0 0 1 0 31.831"/>
+          <path class="circle"
+            stroke-dasharray="{{ stats.FTP.commands }},100"
+            d="M18 2.0845
+               a 15.9155 15.9155 0 0 1 0 31.831"/>
+          <text x="18" y="20.35" class="percentage">
+            {{ stats.FTP.commands }}
+          </text>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- HTTP -->
+  <div class="chart-container-wrapper">
+    <div class="chart-container card-http" data-service="HTTP">
+      <div class="chart-info-wrapper">
+        <h2>
+          <i class="fa-solid fa-globe"></i>
+          HTTP
+        </h2>
+        <span class="session-count">{{ stats.HTTP.sessions }}</span>
+      </div>
+
+      <div class="chart-svg">
+        <svg viewBox="0 0 36 36">
+          <path class="circle-bg"
+            d="M18 2.0845
+               a 15.9155 15.9155 0 0 1 0 31.831"/>
+          <path class="circle"
+            stroke-dasharray="{{ stats.HTTP.commands }},100"
+            d="M18 2.0845
+               a 15.9155 15.9155 0 0 1 0 31.831"/>
+          <text x="18" y="20.35" class="percentage">
+            {{ stats.HTTP.commands }}
+          </text>
+        </svg>
+      </div>
+    </div>
+  </div>
 
 </div>
 
-<!-- ===== BIG CHARTS ROW ===== -->
+<!-- ===============================
+     BIG CHARTS
+================================ -->
 <div class="chart-row charts-wide">
 
   <div class="chart-container-wrapper">
@@ -66,9 +117,12 @@
 
 </div>
 
+<!-- ===============================
+     INITIAL DATA FOR JS
+================================ -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-  const statsData = {{ stats | tojson }};
+  let statsData = {{ stats | tojson }};
 </script>
 
 {% endblock %}
