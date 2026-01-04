@@ -12,7 +12,7 @@ document.getElementById("searchInput").addEventListener("keyup", function () {
 // Export CSV
 function exportTable() {
     let csv = [];
-    const rows = document.querySelectorAll("table tr");
+    const rows = document.querySelectorAll("#honeypotTable tr");
 
     rows.forEach(row => {
         let cols = row.querySelectorAll("td, th");

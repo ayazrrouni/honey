@@ -1,42 +1,39 @@
 {% extends "base.html" %}
-
 {% block content %}
+
 {% if rows %}
 <table id="honeypotTable">
-    <thead>
-        <tr>
-            <th>IP Address</th>
-            <th>Country</th>
-            <th>Severity</th>
-            <th>Sessions</th>
-            <th>Commands</th>
-            <th>Last Seen</th>
-            <th>Last Commands</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for r in rows %}
-        <tr>
-            <td>{{ r.ip }}</td>
-            <td>{{ r.country }}</td>
-            <td>
-                <span class="severity {{ r.severity|lower }}">
-                    {{ r.severity }}
-                </span>
-            </td>
-            <td>{{ r.sessions }}</td>
-            <td>{{ r.commands }}</td>
-            <td>{{ r.last_seen }}</td>
-            <td>
-                {% for c in r.last_commands %}
-                    <div>{{ c }}</div>
-                {% endfor %}
-            </td>
-        </tr>
+  <thead>
+    <tr>
+      <th>IP</th>
+      <th>Country</th>
+      <th>Severity</th>
+      <th>Sessions</th>
+      <th>Commands</th>
+      <th>Last Seen</th>
+      <th>Last Commands</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for r in rows %}
+    <tr>
+      <td>{{ r.ip }}</td>
+      <td>{{ r.country }}</td>
+      <td><span class="severity {{ r.severity|lower }}">{{ r.severity }}</span></td>
+      <td>{{ r.sessions }}</td>
+      <td>{{ r.commands }}</td>
+      <td>{{ r.last_seen }}</td>
+      <td>
+        {% for c in r.last_commands %}
+        <div>{{ c }}</div>
         {% endfor %}
-    </tbody>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
 </table>
 {% else %}
 <p class="empty">No data yet.</p>
 {% endif %}
+
 {% endblock %}

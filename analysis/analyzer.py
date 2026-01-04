@@ -14,17 +14,8 @@ DANGEROUS_CMDS = [
     "python", "perl", "ruby", "nohup"
 ]
 
-
 def calculate_severity(service, commands):
-    """
-    Calculate severity based on:
-    - Service type
-    - Number of commands
-    - Dangerous keywords
-    """
     score = 0
-
-    # Service weight
     if service == "SSH":
         score += 3
     elif service == "FTP":
@@ -32,10 +23,8 @@ def calculate_severity(service, commands):
     else:
         score += 1
 
-    # Number of commands
     score += len(commands)
 
-    # Dangerous commands
     for cmd in commands:
         for bad in DANGEROUS_CMDS:
             if bad in cmd.lower():
@@ -47,7 +36,6 @@ def calculate_severity(service, commands):
         return "Medium"
     return "Low"
 
-
 # =========================
 # Utils
 # =========================
@@ -55,8 +43,10 @@ def parse_time(line):
     try:
         return datetime.fromisoformat(line.split(" ")[0])
     except Exception:
-        return None
-
+        try:
+            return datetime.strptime(line[1:20], "%Y-%m-%d %H:%M:%S")
+        except Exception:
+            return None
 
 def extract_ip(line):
     if "IP=" in line:
@@ -65,22 +55,11 @@ def extract_ip(line):
         return line.split(" - ")[1].strip()
     return "Unknown"
 
-
 # =========================
 # Commands Analyzer
 # =========================
 def analyze_commands():
-    """
-    Reads logs/cmd_audits.log
-    Format:
-    [2026-01-04 05:40:01] 10.0.0.5 | root | uname -a
-    """
-    result = defaultdict(lambda: {
-        "count": 0,
-        "last_commands": [],
-        "last_seen": None
-    })
-
+    result = defaultdict(lambda: {"count": 0, "last_commands": [], "last_seen": None})
     if not os.path.exists(CMD_LOG):
         return result
 
@@ -89,9 +68,7 @@ def analyze_commands():
             try:
                 time_part, rest = line.split("] ", 1)
                 ts = datetime.strptime(time_part[1:], "%Y-%m-%d %H:%M:%S")
-
                 ip, user, cmd = rest.strip().split(" | ", 2)
-
                 row = result[ip]
                 row["count"] += 1
                 row["last_commands"].append(cmd)
@@ -99,12 +76,10 @@ def analyze_commands():
             except Exception:
                 continue
 
-    # Keep last 5 commands only
     for r in result.values():
         r["last_commands"] = r["last_commands"][-5:]
 
     return result
-
 
 # =========================
 # SSH Analyzer
@@ -116,7 +91,7 @@ def analyze_ssh():
     data = defaultdict(lambda: {
         "service": "SSH",
         "ip": "",
-        "country": "N/A",
+        "country": "Local",
         "severity": "Low",
         "sessions": 0,
         "commands": 0,
@@ -129,36 +104,24 @@ def analyze_ssh():
             for line in f:
                 if "IP=" not in line:
                     continue
-
                 ip = extract_ip(line)
                 ts = parse_time(line)
-
                 row = data[ip]
                 row["ip"] = ip
                 row["sessions"] += 1
-
                 if ts and (not row["last_seen"] or ts > row["last_seen"]):
                     row["last_seen"] = ts
 
-    # Merge commands + calculate severity
     for ip, cmds in cmd_data.items():
         row = data[ip]
         row["ip"] = ip
         row["commands"] = cmds["count"]
         row["last_commands"] = cmds["last_commands"]
-
-        if cmds["last_seen"] and (
-            not row["last_seen"] or cmds["last_seen"] > row["last_seen"]
-        ):
+        if cmds["last_seen"] and (not row["last_seen"] or cmds["last_seen"] > row["last_seen"]):
             row["last_seen"] = cmds["last_seen"]
-
-        row["severity"] = calculate_severity(
-            "SSH",
-            row["last_commands"]
-        )
+        row["severity"] = calculate_severity("SSH", row["last_commands"])
 
     return list(data.values())
-
 
 # =========================
 # FTP Analyzer
@@ -169,7 +132,7 @@ def analyze_ftp():
     data = defaultdict(lambda: {
         "service": "FTP",
         "ip": "",
-        "country": "N/A",
+        "country": "Local",
         "severity": "Low",
         "sessions": 0,
         "commands": 0,
@@ -185,42 +148,67 @@ def analyze_ftp():
             if "Backdoor connection established" in line:
                 ip = extract_ip(line)
                 ts = parse_time(line)
-
                 row = data[ip]
                 row["ip"] = ip
                 row["sessions"] += 1
                 row["last_seen"] = ts
-
             elif "CMD:" in line:
                 ip = extract_ip(line)
                 cmd = line.split("CMD:")[1].strip()
                 ts = parse_time(line)
-
                 row = data[ip]
                 row["ip"] = ip
                 row["commands"] += 1
-                row["last_seen"] = ts
                 row["last_commands"].append(cmd)
+                row["last_seen"] = ts
 
     for r in data.values():
         r["last_commands"] = r["last_commands"][-5:]
-        r["severity"] = calculate_severity(
-            "FTP",
-            r["last_commands"]
-        )
+        r["severity"] = calculate_severity("FTP", r["last_commands"])
 
     return list(data.values())
 
-
 # =========================
-# HTTP Analyzer (future)
+# HTTP Analyzer (even if empty)
 # =========================
 def analyze_http():
-    return []
-
+    return [{
+        "service": "HTTP",
+        "ip": "-",
+        "country": "Local",
+        "severity": "Low",
+        "sessions": 0,
+        "commands": 0,
+        "last_seen": None,
+        "last_commands": []
+    }]
 
 # =========================
-# Global Analyzer
+# Statistics
+# =========================
+def compute_stats(rows):
+    stats = {
+        "SSH": {"ips": 0, "sessions": 0, "commands": 0, "high": 0, "medium": 0, "low": 0},
+        "FTP": {"ips": 0, "sessions": 0, "commands": 0, "high": 0, "medium": 0, "low": 0},
+        "HTTP": {"ips": 0, "sessions": 0, "commands": 0, "high": 0, "medium": 0, "low": 0},
+    }
+
+    seen_ips = defaultdict(set)
+
+    for r in rows:
+        svc = r["service"]
+        seen_ips[svc].add(r["ip"])
+        stats[svc]["sessions"] += r["sessions"]
+        stats[svc]["commands"] += r["commands"]
+        stats[svc][r["severity"].lower()] += 1
+
+    for svc in stats:
+        stats[svc]["ips"] = len(seen_ips[svc])
+
+    return stats
+
+# =========================
+# Global analyzer
 # =========================
 def analyze_all():
     rows = []
@@ -229,9 +217,7 @@ def analyze_all():
     rows += analyze_http()
 
     for r in rows:
-        r["last_seen"] = (
-            r["last_seen"].strftime("%Y-%m-%d %H:%M")
-            if r["last_seen"] else "-"
-        )
+        r["last_seen"] = r["last_seen"].strftime("%Y-%m-%d %H:%M") if r["last_seen"] else "-"
 
-    return rows
+    stats = compute_stats(rows)
+    return rows, stats
