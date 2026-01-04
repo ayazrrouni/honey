@@ -4,6 +4,7 @@ import logging
 import datetime
 
 FAKE_FS_PATH = "core/fake_fs.json"
+CMD_LOG_FILE = "logs/cmd_audits.log"
 
 logging.basicConfig(
     level=logging.INFO,
@@ -92,11 +93,9 @@ class FakeShell:
         if base == "cat":
             return self._cat(parts)
 
-        # 🆕 ifconfig
         if base == "ifconfig":
             return self._ifconfig()
 
-        # 🆕 clear
         if base == "clear":
             return "\033[2J\033[H"
 
@@ -234,7 +233,6 @@ class FakeShell:
 
         return files[filename]
 
-    # 🆕 ifconfig fake output
     def _ifconfig(self):
         return (
             "eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500\n"
@@ -254,11 +252,21 @@ class FakeShell:
 
 
 # =============================
-# FTP Backdoor Command Handler
+# FTP / SSH Command Handler
 # =============================
 def handle_command(cmd, session):
     if "shell" not in session:
         session["shell"] = FakeShell(session.get("user", "root"))
+
+    # 🔐 تسجيل الأوامر (بدون لمس FakeShell)
+    os.makedirs("logs", exist_ok=True)
+
+    user = session.get("user", "unknown")
+    ip = session.get("ip", "unknown")
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    with open(CMD_LOG_FILE, "a") as f:
+        f.write(f"[{timestamp}] {ip} | {user} | {cmd}\n")
 
     shell = session["shell"]
     output = shell.run(cmd)

@@ -173,3 +173,40 @@ footer {
     background-color: rgba(239,68,68,0.15);
     color: #ef4444;
 }
+/* ===== Service Tabs ===== */
+
+.service-tabs {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.service-tabs .tab {
+    padding: 10px 18px;
+    border-radius: 10px;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    transition: all 0.2s ease;
+}
+
+.service-tabs .tab:hover {
+    background-color: var(--row-hover);
+    color: var(--text-main);
+}
+
+.service-tabs .tab.active {
+    background: linear-gradient(
+        135deg,
+        rgba(56,189,248,0.25),
+        rgba(56,189,248,0.05)
+    );
+    border-color: var(--accent);
+    color: var(--accent);
+    box-shadow: 0 0 0 1px rgba(56,189,248,0.2);
+}
+

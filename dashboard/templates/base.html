@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title }}</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<header class="topbar">
+    <h1>{{ title }}</h1>
+<nav class="service-tabs">
+    <a href="/ssh" class="tab {% if active == 'ssh' %}active{% endif %}">
+        SSH
+    </a>
+    <a href="/ftp" class="tab {% if active == 'ftp' %}active{% endif %}">
+        FTP
+    </a>
+    <a href="/http" class="tab {% if active == 'http' %}active{% endif %}">
+        HTTP
+    </a>
+</nav>
+
+</header>
+
+<div class="controls">
+    <input type="text" id="searchInput" placeholder="Search IP...">
+    <button onclick="exportTable()">Export CSV</button>
+</div>
+
+{% block content %}{% endblock %}
+
+<script src="{{ url_for('static', filename='dashboard.js') }}"></script>
+
+</body>
+</html>

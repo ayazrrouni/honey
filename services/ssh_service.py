@@ -20,8 +20,10 @@ logging.basicConfig(
 class FakeSSHServer(paramiko.ServerInterface):
     def __init__(self):
         self.event = threading.Event()
+        self.username = "unknown"
 
     def check_auth_password(self, username, password):
+        self.username = username
         logging.info(f"[SSH] Login attempt {username}:{password}")
         return paramiko.AUTH_SUCCESSFUL
 
@@ -56,15 +58,26 @@ def handle_client(client, addr):
     try:
         transport = paramiko.Transport(client)
         transport.add_server_key(paramiko.RSAKey(filename=HOST_KEY))
-        transport.start_server(server=FakeSSHServer())
+
+        server = FakeSSHServer()
+        transport.start_server(server=server)
 
         chan = transport.accept(20)
         if chan is None:
             logging.warning(f"[SSH] No channel from {ip}")
             return
 
-        shell = FakeShell("test")
-        session = {"shell": shell}
+        # username الحقيقي
+        username = server.username or "test"
+
+        shell = FakeShell(username)
+
+        # ✅ session فيها ip + user (المهم للدashboard)
+        session = {
+            "shell": shell,
+            "ip": ip,
+            "user": username
+        }
 
         chan.send(shell.prompt())
 
@@ -75,7 +88,7 @@ def handle_client(client, addr):
 
             logging.info(f"[SSH] {ip} CMD: {cmd}")
 
-            # 🔴 log command
+            # 🔴 log command (session logger)
             log_command(ip, session_id, cmd)
 
             output, exit_flag = handle_command(cmd, session)

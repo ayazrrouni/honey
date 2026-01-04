@@ -9,7 +9,13 @@
 </head>
 <body>
 
-<h1>SSH Honeypot Dashboard</h1>
+<h1>🍯 Honeypot Dashboard</h1>
+
+<div class="service-tabs">
+    <button class="tab-btn active" data-service="SSH">SSH</button>
+    <button class="tab-btn" data-service="FTP">FTP</button>
+    <button class="tab-btn" data-service="HTTP">HTTP</button>
+</div>
 
 <div class="controls">
     <input
@@ -24,6 +30,7 @@
 <table id="honeypotTable">
     <thead>
         <tr>
+            <th>Service</th>
             <th>IP Address</th>
             <th>Country</th>
             <th>Severity</th>
@@ -35,7 +42,8 @@
     </thead>
     <tbody>
         {% for r in rows %}
-        <tr>
+        <tr class="service-row" data-service="{{ r.service }}">
+            <td>{{ r.service }}</td>
             <td>{{ r.ip }}</td>
             <td>{{ r.country }}</td>
             <td>
@@ -46,11 +54,15 @@
             <td>{{ r.sessions }}</td>
             <td>{{ r.commands }}</td>
             <td>{{ r.last_seen }}</td>
-            <td>
-                {% for c in r.last_commands %}
-                    <div>{{ c }}</div>
-                {% endfor %}
-            </td>
+        <td>
+    {% if r.last_commands %}
+        {% for c in r.last_commands %}
+            <div>{{ c }}</div>
+        {% endfor %}
+    {% else %}
+        <div>-</div>
+    {% endif %}
+</td>
         </tr>
         {% endfor %}
     </tbody>
@@ -61,6 +73,55 @@
 
 <!-- JS -->
 <script src="{{ url_for('static', filename='dashboard.js') }}"></script>
+<script>
+    // Tab functionality
+    const tabs = document.querySelectorAll('.tab-btn');
+    const rows = document.querySelectorAll('.service-row');
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            // Switch active tab
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+
+            const service = tab.dataset.service;
+            rows.forEach(r => {
+                r.style.display = (service === "ALL" || r.dataset.service === service) ? '' : 'none';
+            });
+        });
+    });
+
+    // Search filter
+    document.getElementById("searchInput").addEventListener("keyup", function () {
+        const filter = this.value.toLowerCase();
+        rows.forEach(row => {
+            const ip = row.cells[1].innerText.toLowerCase();
+            row.style.display = ip.includes(filter) ? "" : "none";
+        });
+    });
+
+    // Export CSV
+    function exportTable() {
+        let csv = [];
+        const rowsAll = document.querySelectorAll("#honeypotTable tr");
+        rowsAll.forEach(row => {
+            let cols = row.querySelectorAll("td, th");
+            let rowData = [];
+            cols.forEach(col => {
+                rowData.push('"' + col.innerText.replace(/"/g, '""') + '"');
+            });
+            csv.push(rowData.join(","));
+        });
+
+        const blob = new Blob([csv.join("\n")], { type: "text/csv" });
+        const url = window.URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "honeypot_logs.csv";
+        a.click();
+    }
+</script>
 
 </body>
 </html>
