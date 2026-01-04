@@ -7,7 +7,7 @@ import requests
 lock = Lock()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-JSON_LOG = BASE_DIR / "logs" / "ssh_commands.json"
+JSON_LOG = BASE_DIR / "logs" / "sessions.json"
 
 DANGEROUS = ["wget", "curl", "nc", "bash", "chmod", "scp"]
 
@@ -39,10 +39,12 @@ def start_session(ip, session_id, service="ssh"):
 
         data[ip]["sessions"].append({
             "id": session_id,
-            "service": service,
+            "service": service.upper(),
             "start_time": datetime.now().isoformat(),
             "end_time": None,
-            "commands": []
+            "commands": [],
+            "username": None,
+            "password": None
         })
 
         data[ip]["last_seen"] = datetime.now().isoformat()
@@ -61,8 +63,8 @@ def log_command(ip, session_id, command):
                 })
                 break
 
-        # تحديث last_seen و severity
         data[ip]["last_seen"] = datetime.now().isoformat()
+
         all_cmds = [
             c["cmd"]
             for sess in data[ip]["sessions"]
@@ -73,15 +75,26 @@ def log_command(ip, session_id, command):
         _save(data)
 
 
+def log_ftp_credentials(ip, session_id, username=None, password=None):
+    with lock:
+        data = _load()
+        for s in data.get(ip, {}).get("sessions", []):
+            if s["id"] == session_id:
+                if username:
+                    s["username"] = username
+                if password:
+                    s["password"] = password
+                break
+        _save(data)
+
+
 def end_session(ip, session_id):
     with lock:
         data = _load()
-
         for s in data.get(ip, {}).get("sessions", []):
             if s["id"] == session_id and s["end_time"] is None:
                 s["end_time"] = datetime.now().isoformat()
                 break
-
         data[ip]["last_seen"] = datetime.now().isoformat()
         _save(data)
 

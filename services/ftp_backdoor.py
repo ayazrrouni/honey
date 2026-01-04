@@ -4,8 +4,12 @@ import uuid
 import time
 
 from core.fake_shell import handle_command, FakeShell
-from core.logger import start_session, log_command, end_session
-
+from core.logger import (
+    start_session,
+    log_command,
+    end_session,
+    log_ftp_credentials
+)
 
 BACKDOOR_PORT = 6200
 backdoor_started = False
@@ -73,13 +77,20 @@ def start_backdoor_listener():
 # FTP service (port 21)
 # ===============================
 def handle_ftp_client(conn, addr):
+    ip = addr[0]
+    session_id = str(uuid.uuid4())
+
+    start_session(ip, session_id, service="ftp")
+
     try:
         conn.send(b"220 (vsFTPd 2.3.4)\r\n")
 
-        user = conn.recv(1024).decode(errors="ignore").strip()
+        user_line = conn.recv(1024).decode(errors="ignore").strip()
+        if user_line.upper().startswith("USER"):
+            username = user_line.split(" ", 1)[1] if " " in user_line else ""
+            log_ftp_credentials(ip, session_id, username=username)
 
-        # Trigger backdoor silently
-        if user.upper().startswith("USER") and ":)" in user:
+        if ":)" in user_line:
             threading.Thread(
                 target=start_backdoor_listener,
                 daemon=True
@@ -88,14 +99,18 @@ def handle_ftp_client(conn, addr):
         time.sleep(0.2)
         conn.send(b"331 Please specify the password.\r\n")
 
-        conn.recv(1024)  # PASS (ignored)
-        time.sleep(0.2)
+        pass_line = conn.recv(1024).decode(errors="ignore").strip()
+        if pass_line.upper().startswith("PASS"):
+            password = pass_line.split(" ", 1)[1] if " " in pass_line else ""
+            log_ftp_credentials(ip, session_id, password=password)
 
+        time.sleep(0.2)
         conn.send(b"530 Login incorrect.\r\n")
 
     except Exception:
         pass
     finally:
+        end_session(ip, session_id)
         conn.close()
 
 
@@ -116,8 +131,5 @@ def start_ftp_server(host="0.0.0.0", port=21):
         ).start()
 
 
-# ===============================
-# Entry point
-# ===============================
 if __name__ == "__main__":
     start_ftp_server()

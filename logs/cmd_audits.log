@@ -69,3 +69,11 @@
 [2026-01-04 15:35:44] unknown | unknown | cd ..
 [2026-01-04 15:35:47] unknown | unknown | pwd
 [2026-01-04 15:36:49] unknown | unknown | exit
+[2026-01-04 16:00:28] 127.0.0.1 | test | lsd
+[2026-01-04 16:00:35] 127.0.0.1 | test | ls
+[2026-01-04 16:01:17] 127.0.0.1 | test | exit
+[2026-01-04 16:01:57] unknown | unknown | ls
+[2026-01-04 16:02:02] unknown | unknown | cd
+[2026-01-04 16:09:54] unknown | unknown | ls
+[2026-01-04 16:09:56] unknown | unknown | pwd
+[2026-01-04 16:10:02] unknown | unknown | whoami

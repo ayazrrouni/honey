@@ -34,6 +34,12 @@
           <th>IP</th>
           <th>Country</th>
           <th>Severity</th>
+
+          {% if active == "ftp" %}
+            <th>Username</th>
+            <th>Password</th>
+          {% endif %}
+
           <th>Sessions</th>
           <th>Commands</th>
           <th>Last Seen</th>
@@ -46,14 +52,26 @@
         <tr>
           <td class="mono">{{ r.ip }}</td>
           <td>{{ r.country }}</td>
+
           <td>
             <span class="sev {{ r.severity|lower }}">
               {{ r.severity }}
             </span>
           </td>
+
+          {% if active == "ftp" %}
+            <td class="mono">
+              {{ r.username if r.username else "-" }}
+            </td>
+            <td class="mono">
+              {{ r.password if r.password else "-" }}
+            </td>
+          {% endif %}
+
           <td>{{ r.sessions }}</td>
           <td>{{ r.commands }}</td>
           <td>{{ r.last_seen }}</td>
+
           <td class="mono">
             {% for c in r.last_commands %}
               <div class="cmd">{{ c }}</div>
@@ -115,7 +133,7 @@ function exportTable() {
 <script>
   setTimeout(() => {
     window.location.reload();
-  }, 7000); // تحديث كل 7 ثواني
+  }, 7000);
 </script>
 
 {% endblock %}
