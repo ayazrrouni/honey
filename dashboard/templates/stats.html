@@ -1,129 +1,74 @@
 {% extends "base.html" %}
 {% block content %}
 
-<!-- Grid الإحصائيات -->
-<div class="stats-grid">
+<!-- ===== TOP CARDS ===== -->
+<div class="chart-row three">
+
   {% for svc, s in stats.items() %}
-  <div class="stat-card">
-    <h3>{{ svc }}</h3>
-    <div class="stat-line">IPs <span>{{ s.ips }}</span></div>
-    <div class="stat-line">Sessions <span>{{ s.sessions }}</span></div>
-    <div class="stat-line">Commands <span>{{ s.commands }}</span></div>
-    <div class="sev high">High {{ s.high }}</div>
-    <div class="sev medium">Medium {{ s.medium }}</div>
-    <div class="sev low">Low {{ s.low }}</div>
+  <div class="chart-container-wrapper">
+    <div class="chart-container
+      {% if svc == 'SSH' %}card-ssh{% endif %}
+      {% if svc == 'FTP' %}card-ftp{% endif %}
+      {% if svc == 'HTTP' %}card-http{% endif %}
+    ">
+      <div class="chart-info-wrapper">
+        <h2>
+          {% if svc == "SSH" %}
+            <i class="fa-solid fa-terminal"></i>
+          {% elif svc == "FTP" %}
+            <i class="fa-solid fa-folder-open"></i>
+          {% elif svc == "HTTP" %}
+            <i class="fa-solid fa-globe"></i>
+          {% endif %}
+          {{ svc }}
+        </h2>
+        <span>{{ s.sessions }}</span>
+      </div>
+
+      <div class="chart-svg">
+        <svg viewBox="0 0 36 36">
+          <path class="circle-bg"
+            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831"/>
+          <path class="circle"
+            stroke-dasharray="{{ s.commands }},100"
+            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831"/>
+          <text x="18" y="20.35" class="percentage">
+            {{ s.commands }}
+          </text>
+        </svg>
+      </div>
+    </div>
   </div>
   {% endfor %}
+
 </div>
 
-<!-- Charts -->
-<div class="charts-grid">
-  <div class="chart-container">
-    <canvas id="sessionsChart"></canvas>
+<!-- ===== BIG CHARTS ROW ===== -->
+<div class="chart-row charts-wide">
+
+  <div class="chart-container-wrapper">
+    <div class="chart-container chart-xxl">
+      <canvas id="sessionsChart"></canvas>
+    </div>
   </div>
-  <div class="chart-container">
-    <canvas id="commandsChart"></canvas>
+
+  <div class="chart-container-wrapper">
+    <div class="chart-container chart-xxl">
+      <canvas id="commandsChart"></canvas>
+    </div>
   </div>
-  <div class="chart-container">
-    <canvas id="severityChart"></canvas>
+
+  <div class="chart-container-wrapper">
+    <div class="chart-container chart-xxl">
+      <canvas id="severityChart"></canvas>
+    </div>
   </div>
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-const statsData = {{ stats|tojson }};
-
-// ألوان جديدة
-const colors = {
-    sessions: '#60a5fa', // أزرق فاتح
-    commands: '#facc15', // أصفر
-    severity: ['#ef4444','#f97316','#10b981'] // أحمر / برتقالي / أخضر
-};
-
-// خيارات مشتركة
-const commonOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-        legend: {
-            display: true,
-            position: 'bottom',
-            labels: { color: '#e6edf3', font: { size: 12 } }
-        },
-        tooltip: { mode: 'index', intersect: false }
-    },
-    scales: {
-        x: { ticks: { color: '#e6edf3' }, grid: { color: 'rgba(255,255,255,0.05)' } },
-        y: { ticks: { color: '#e6edf3' }, grid: { color: 'rgba(255,255,255,0.05)' } }
-    }
-};
-
-// ===== Sessions Line Chart =====
-new Chart(document.getElementById('sessionsChart').getContext('2d'), {
-    type: 'line',
-    data: {
-        labels: Object.keys(statsData),
-        datasets: [{
-            label: 'Sessions',
-            data: Object.values(statsData).map(s => s.sessions),
-            borderColor: colors.sessions,
-            backgroundColor: colors.sessions + '33', // شفافية
-            fill: true,
-            tension: 0.4,
-            pointRadius: 5,
-            pointHoverRadius: 7
-        }]
-    },
-    options: commonOptions
-});
-
-// ===== Commands Line Chart =====
-new Chart(document.getElementById('commandsChart').getContext('2d'), {
-    type: 'line',
-    data: {
-        labels: Object.keys(statsData),
-        datasets: [{
-            label: 'Commands',
-            data: Object.values(statsData).map(s => s.commands),
-            borderColor: colors.commands,
-            backgroundColor: colors.commands + '33',
-            fill: true,
-            tension: 0.4,
-            pointRadius: 5,
-            pointHoverRadius: 7
-        }]
-    },
-    options: commonOptions
-});
-
-// ===== Severity Doughnut Chart =====
-new Chart(document.getElementById('severityChart').getContext('2d'), {
-    type: 'doughnut',
-    data: {
-        labels: ['High', 'Medium', 'Low'],
-        datasets: [{
-            data: [
-                Object.values(statsData).reduce((a,b)=>a+b.high,0),
-                Object.values(statsData).reduce((a,b)=>a+b.medium,0),
-                Object.values(statsData).reduce((a,b)=>a+b.low,0)
-            ],
-            backgroundColor: colors.severity,
-            borderColor: '#0b1620',
-            borderWidth: 2
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                display: true,
-                position: 'bottom',
-                labels: { color: '#e6edf3', font: { size: 13, weight: 'bold' } }
-            }
-        }
-    }
-});
+  const statsData = {{ stats | tojson }};
 </script>
 
 {% endblock %}

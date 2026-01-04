@@ -1,34 +1,70 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>{{ title }}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <meta charset="UTF-8">
+  <title>{{ title }}</title>
+
+  <!-- Font Awesome -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+  />
+
+  <!-- Main CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='recruiter.css') }}">
 </head>
+
 <body>
+<div class="app-container">
 
-<header class="topbar">
-    <div class="title-block">
-        <h1>SSH Honeypot Dashboard</h1>
-        <p>Real-time attack surface monitoring</p>
+  <!-- ===== SIDEBAR ===== -->
+  <div class="app-left">
+    <div class="app-logo">
+      HONEY<span>POT</span>
     </div>
 
-    <div class="top-actions">
-        <input type="text" id="searchInput" placeholder="Search IP...">
-        <button onclick="exportTable()">Export CSV</button>
-    </div>
-</header>
+    <ul class="nav-list">
+      <li class="nav-list-item {% if active=='stats' %}active{% endif %}">
+        <a class="nav-list-link" href="/stats">
+          <i class="fa-solid fa-chart-line"></i>
+          <span>Stats</span>
+        </a>
+      </li>
 
-<!-- Navigation رئيسي -->
-<div class="honey-bar">
-  <a href="/ssh" class="honey-tab {% if active == 'ssh' %}active{% endif %}">SSH</a>
-  <a href="/ftp" class="honey-tab {% if active == 'ftp' %}active{% endif %}">FTP</a>
-  <a href="/http" class="honey-tab {% if active == 'http' %}active{% endif %}">HTTP</a>
-  <a href="/stats" class="honey-tab {% if active == 'stats' %}active{% endif %}">STATS</a>
+      <li class="nav-list-item {% if active=='ssh' %}active{% endif %}">
+        <a class="nav-list-link" href="/ssh">
+          <i class="fa-solid fa-terminal"></i>
+          <span>SSH</span>
+        </a>
+      </li>
+
+      <li class="nav-list-item {% if active=='ftp' %}active{% endif %}">
+        <a class="nav-list-link" href="/ftp">
+          <i class="fa-solid fa-folder-open"></i>
+          <span>FTP</span>
+        </a>
+      </li>
+
+      <li class="nav-list-item {% if active=='http' %}active{% endif %}">
+        <a class="nav-list-link" href="/http">
+          <i class="fa-solid fa-globe"></i>
+          <span>HTTP</span>
+        </a>
+      </li>
+    </ul>
+  </div>
+
+  <!-- ===== MAIN ===== -->
+  <div class="app-main">
+    <div class="main-header-line">
+      <h1>{{ title }}</h1>
+    </div>
+
+    {% block content %}{% endblock %}
+  </div>
+
 </div>
 
-{% block content %}{% endblock %}
-
-<script src="{{ url_for('static', filename='dashboard.js') }}"></script>
+<script src="{{ url_for('static', filename='recruiter.js') }}"></script>
 </body>
 </html>

@@ -1,0 +1,318 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+* {
+  box-sizing: border-box;
+}
+
+/* ===============================
+   GLOBAL
+================================ */
+body {
+  margin: 0;
+  height: 100vh;
+  font-family: 'Poppins', sans-serif;
+  color: #f8fafc;
+  background: radial-gradient(
+    circle at top,
+    #0b1320 0%,
+    #05080f 55%,
+    #000000 100%
+  );
+}
+
+/* ===============================
+   LAYOUT
+================================ */
+.app-container {
+  display: flex;
+  height: 100vh;
+}
+
+/* ===============================
+   SIDEBAR
+================================ */
+.app-left {
+  width: 280px;
+  background: linear-gradient(180deg, #0d1422, #05080f);
+  padding: 32px 0;
+  border-right: 1px solid rgba(255,255,255,0.05);
+  display: flex;
+  flex-direction: column;
+}
+
+/* LOGO */
+.app-logo {
+  padding: 0 32px;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  color: #ffffff;
+}
+
+.app-logo span {
+  color: #38bdf8;
+}
+
+/* NAV */
+.nav-list {
+  list-style: none;
+  padding: 0;
+  margin: 80px 0 0 0;
+}
+
+.nav-list-item {
+  margin-bottom: 14px;
+}
+
+.nav-list-link {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 28px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #e5e7eb;
+  text-decoration: none;
+  border-radius: 12px;
+  transition: background 0.25s ease, color 0.25s ease;
+}
+
+/* ICON COLORS */
+.nav-list-link .fa-chart-line { color: #38bdf8; }
+.nav-list-link .fa-terminal   { color: #22c55e; }
+.nav-list-link .fa-folder-open{ color: #60a5fa; }
+.nav-list-link .fa-globe      { color: #2dd4bf; }
+
+.nav-list-link:hover {
+  background: linear-gradient(
+    90deg,
+    rgba(56,189,248,0.18),
+    rgba(34,197,94,0.12)
+  );
+  color: #ffffff;
+}
+
+.nav-list-item.active .nav-list-link {
+  background: linear-gradient(
+    90deg,
+    rgba(56,189,248,0.28),
+    rgba(34,197,94,0.22)
+  );
+  color: #ffffff;
+}
+
+/* ===============================
+   MAIN
+================================ */
+.app-main {
+  flex: 1;
+  padding: 36px;
+  overflow-y: auto;
+}
+
+/* HEADER */
+.main-header-line h1 {
+  margin: 0 0 36px 0;
+  font-size: 30px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+/* ===============================
+   ROWS
+================================ */
+.chart-row {
+  display: flex;
+  gap: 32px;
+  margin-bottom: 40px;
+}
+
+.chart-row.three > .chart-container-wrapper {
+  flex: 1;
+}
+
+.chart-row.charts-wide > .chart-container-wrapper {
+  flex: 1;
+}
+
+/* ===============================
+   CARDS
+================================ */
+.chart-container {
+  background: linear-gradient(180deg, #0f172a, #020617);
+  border-radius: 22px;
+  padding: 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid rgba(255,255,255,0.06);
+  box-shadow: 0 0 50px rgba(56,189,248,0.06);
+}
+
+/* BIG CHARTS */
+.chart-xxl {
+  height: 420px;
+}
+
+/* ===============================
+   CARD TEXT
+================================ */
+.chart-info-wrapper h2 {
+  margin: 0 0 10px 0;
+  font-size: 18px;
+  font-weight: 500;
+  color: #cbd5f5;
+}
+
+.chart-info-wrapper h2 i {
+  margin-right: 10px;
+}
+
+.chart-info-wrapper span {
+  font-size: 38px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+/* ===============================
+   CIRCULAR PROGRESS
+================================ */
+.chart-svg {
+  width: 130px;
+}
+
+.circle-bg {
+  fill: none;
+  stroke: #1e293b;
+  stroke-width: 1.8;
+}
+
+.circle {
+  fill: none;
+  stroke-width: 3;
+  stroke-linecap: round;
+  animation: progress 1s ease-out forwards;
+}
+
+/* SERVICE COLORS */
+.card-ssh .circle  { stroke: #22c55e; }
+.card-ftp .circle  { stroke: #38bdf8; }
+.card-http .circle { stroke: #2dd4bf; }
+
+.percentage {
+  fill: #ffffff;
+  font-size: 0.6em;
+  text-anchor: middle;
+}
+
+@keyframes progress {
+  from { stroke-dasharray: 0 100; }
+}
+/* ===============================
+   TABLE ACTIONS
+================================ */
+.table-actions {
+  justify-content: space-between;
+  margin-bottom: 24px; /* ⬅️ مسافة عن الجدول */
+}
+
+.table-search {
+  width: 260px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background-color: rgba(15,23,42,0.8);
+  color: #ffffff;
+  font-size: 15px;
+}
+
+.table-search::placeholder {
+  color: #9ca3af;
+}
+
+.export-btn {
+  padding: 12px 18px;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(
+    90deg,
+    rgba(56,189,248,0.8),
+    rgba(34,197,94,0.8)
+  );
+  color: #ffffff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ===============================
+   TABLE
+================================ */
+.table-container {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+#honeypotTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+#honeypotTable thead th {
+  text-align: left;
+  padding: 16px;
+  font-size: 14px;          /* ⬅️ أكبر */
+  font-weight: 600;
+  color: #e5e7eb;           /* ⬅️ أفتح */
+  border-bottom: 1px solid rgba(255,255,255,0.15);
+}
+
+#honeypotTable tbody td {
+  padding: 16px;
+  font-size: 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+#honeypotTable tbody tr:hover {
+  background-color: rgba(255,255,255,0.04);
+}
+
+/* ===============================
+   SEVERITY
+================================ */
+.sev {
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.sev.high {
+  background-color: rgba(239,68,68,0.2);
+  color: #fecaca;
+}
+
+.sev.medium {
+  background-color: rgba(56,189,248,0.2);
+  color: #bae6fd;
+}
+
+.sev.low {
+  background-color: rgba(34,197,94,0.2);
+  color: #bbf7d0;
+}
+
+/* ===============================
+   MONO / COMMANDS
+================================ */
+.mono {
+  font-family: monospace;
+}
+
+.cmd {
+  background-color: rgba(15,23,42,0.9);
+  padding: 6px 8px;
+  border-radius: 6px;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+
