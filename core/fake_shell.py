@@ -66,8 +66,6 @@ class FakeShell:
         if base == "id":
             return f"uid=1000({self.username}) gid=1000({self.username}) groups=1000({self.username})\n"
 
-        if base == "uname":
-            return "Linux\n"
 
         if base == "pwd":
             return self.cwd + "\n"
@@ -104,6 +102,47 @@ class FakeShell:
 
         if base in ("exit", "logout"):
             return "__exit__"
+        
+        if base == "ps":
+            return self._ps(parts)
+
+        if base == "netstat":
+            return self._netstat(parts)
+
+        if base == "sudo":
+            return self._sudo(parts)
+
+        if base == "df":
+            return self._df()
+
+        if base == "free":
+            return self._free()
+
+        if base == "ip":
+            return self._ip(parts)
+
+        if base == "uname":
+            if "-a" in parts:
+                return self._uname_a()
+            return "Linux\n"
+        
+        if base == "touch":
+            return self._touch(parts)
+
+        if base == "chmod":
+            return self._chmod(parts)
+
+        if base == "chown":
+            return self._chown(parts)
+
+        # Fake execution attempts (high severity)
+        if base.startswith("./"):
+            return self._execute_fake(base)
+
+        if base in ("sh", "bash"):
+            return self._execute_fake(parts[-1])
+
+
 
         return f"{base}: command not found\n"
 
@@ -249,6 +288,90 @@ class FakeShell:
         for i, cmd in enumerate(self.history, 1):
             out.append(f"{i}  {cmd}")
         return "\n".join(out) + "\n"
+    
+    def _ps(self, parts):
+        return (
+            "USER       PID %CPU %MEM COMMAND\n"
+            "root         1  0.0  0.1 /sbin/init\n"
+            "root       233  0.0  0.2 sshd\n"
+            "www-data   412  0.1  0.3 apache2\n"
+        )
+
+    def _netstat(self, parts):
+        return (
+            "Proto Local Address   PID/Program\n"
+            "tcp   0.0.0.0:22      233/sshd\n"
+            "tcp   0.0.0.0:21      198/vsftpd\n"
+            "tcp   0.0.0.0:80      412/apache2\n"
+        )
+
+    def _sudo(self, parts):
+        if "-l" in parts:
+            return (
+                f"User {self.username} may run the following commands:\n"
+                "    (ALL) NOPASSWD: ALL\n"
+            )
+        return "sudo: permission denied\n"
+
+    def _df(self):
+        return (
+            "Filesystem      Size  Used Avail Use%\n"
+            "/dev/sda1        20G   8G   11G  42%\n"
+        )
+
+    def _free(self):
+        return (
+            "              total   used   free\n"
+            "Mem:           2048    512   1536\n"
+            "Swap:          1024      0   1024\n"
+        )
+
+    def _ip(self, parts):
+        if "a" in parts:
+            return (
+                "2: eth0: <UP> mtu 1500\n"
+                "    inet 192.168.1.100/24\n"
+            )
+        return ""
+
+    def _uname_a(self):
+        return (
+            "Linux ubuntu 5.15.0-84-generic #93-Ubuntu SMP x86_64 GNU/Linux\n"
+        )
+    
+    def _touch(self, parts):
+        if len(parts) < 2:
+            return "touch: missing file operand\n"
+
+        filename = parts[1]
+        files = self.fs.setdefault(self.cwd, {})
+        files.setdefault(filename, "")
+        save_fs(self.fs)
+        return ""
+
+    def _chmod(self, parts):
+        if len(parts) < 3:
+            return "chmod: missing operand\n"
+
+        filename = parts[-1]
+        files = self.fs.get(self.cwd, {})
+
+        if filename not in files:
+            return f"chmod: cannot access '{filename}': No such file\n"
+
+        # Fake only: لا نغيّر صلاحيات حقيقية
+        return ""
+
+    def _chown(self, parts):
+        if len(parts) < 3:
+            return "chown: missing operand\n"
+
+        # Fake only
+        return ""
+
+    def _execute_fake(self, target):
+        # محاولة تنفيذ (نرفع severity في الداشبورد)
+        return f"{target}: Permission denied\n"
 
 
 # =============================

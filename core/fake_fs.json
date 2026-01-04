@@ -1,5 +1,7 @@
 {
-    "/home/test": {},
+    "/home/test": {
+        "l": ""
+    },
     "/home/root": {},
     "/home/root/l": {},
     "/home/test/final": {}

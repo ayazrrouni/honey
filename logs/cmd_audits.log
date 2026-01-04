@@ -33,3 +33,39 @@
 [2026-01-04 13:00:52] 127.0.0.1 | test | ls
 [2026-01-04 13:04:58] 127.0.0.1 | test | ls
 [2026-01-04 13:05:02] 127.0.0.1 | test | pwd
+[2026-01-04 14:37:07] 127.0.0.1 | test | exit
+[2026-01-04 14:38:30] 127.0.0.1 | test | ls
+[2026-01-04 14:38:38] 127.0.0.1 | test | ifconfig
+[2026-01-04 14:38:47] 127.0.0.1 | test | uname
+[2026-01-04 14:39:44] 127.0.0.1 | test | touch l
+[2026-01-04 14:39:47] 127.0.0.1 | test | ls
+[2026-01-04 14:40:05] 127.0.0.1 | test | chmod +x l
+[2026-01-04 14:40:10] 127.0.0.1 | test | ls -a l
+[2026-01-04 14:40:31] 127.0.0.1 | test | sudo ifconfig
+[2026-01-04 14:40:37] 127.0.0.1 | test | sudo su
+[2026-01-04 14:40:46] 127.0.0.1 | test | exir
+[2026-01-04 14:40:49] 127.0.0.1 | test | exit
+[2026-01-04 14:42:41] unknown | unknown | id
+[2026-01-04 14:42:41] unknown | unknown | nohup  >/dev/null 2>&1
+[2026-01-04 14:42:43] unknown | unknown | echo afB9i4RVaee1WCzj
+[2026-01-04 14:43:06] unknown | unknown | ls
+[2026-01-04 14:43:09] unknown | unknown | cd l
+[2026-01-04 14:43:11] unknown | unknown | pwd
+[2026-01-04 14:43:21] unknown | unknown | exit
+[2026-01-04 14:48:01] unknown | unknown | sgd
+[2026-01-04 14:48:03] unknown | unknown | ls
+[2026-01-04 14:48:32] unknown | unknown | exit
+[2026-01-04 14:49:33] unknown | unknown | ls
+[2026-01-04 14:49:37] unknown | unknown | ls
+[2026-01-04 14:50:09] unknown | unknown | ls
+[2026-01-04 14:52:02] unknown | unknown | whoami
+[2026-01-04 15:03:37] unknown | unknown | whoami
+[2026-01-04 15:03:39] unknown | unknown | ls
+[2026-01-04 15:03:42] unknown | unknown | exit
+[2026-01-04 15:35:23] unknown | unknown | id
+[2026-01-04 15:35:23] unknown | unknown | nohup  >/dev/null 2>&1
+[2026-01-04 15:35:25] unknown | unknown | echo xjaZjEYVvpLPYnsR
+[2026-01-04 15:35:40] unknown | unknown | ls
+[2026-01-04 15:35:44] unknown | unknown | cd ..
+[2026-01-04 15:35:47] unknown | unknown | pwd
+[2026-01-04 15:36:49] unknown | unknown | exit
