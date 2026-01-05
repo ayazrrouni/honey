@@ -134,12 +134,19 @@ def parse_http_attacks():
             if service != "HTTP":
                 continue
 
+            # IP
             ip_match = re.search(r"IP=([\d\.]+)", details)
             ip = ip_match.group(1) if ip_match else "127.0.0.1"
 
+            # PAGE / URL
+            page_match = re.search(r"(GET|POST)\s+([^\s]+)", details)
+            page = page_match.group(2) if page_match else "-"
+
+            # INPUTS / PAYLOADS
             inputs = []
             if any(x in details for x in ["USER=", "PASS=", "PAYLOAD=", "FILE="]):
                 clean = re.sub(r"IP=[\d\.]+\s*", "", details)
+                clean = re.sub(r"(GET|POST)\s+[^\s]+\s*", "", clean)
                 inputs.append(clean.strip())
 
             severity = HTTP_ATTACK_SEVERITY.get(attack, "Low")
@@ -148,7 +155,7 @@ def parse_http_attacks():
                 "service": "HTTP",
                 "ip": ip,
                 "country": "LOCAL",
-                "pages": ["-"],
+                "pages": [page],
                 "attack_types": [attack],
                 "sessions": 1,
                 "inputs": inputs,
@@ -161,6 +168,7 @@ def parse_http_attacks():
             })
 
     return rows
+
 
 
 # ========= MAIN ANALYZE =========
