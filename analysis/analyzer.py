@@ -119,18 +119,10 @@ def analyze_ftp():
 
 # ========= HTTP PARSER =========
 def parse_http_attacks():
-    data = defaultdict(lambda: {
-        "ip": "",
-        "country": "LOCAL",
-        "pages": set(),
-        "attack_types": set(),
-        "sessions": 0,
-        "inputs": [],
-        "last_seen": ""
-    })
+    rows = []
 
     if not ATTACKS_LOG.exists():
-        return []
+        return rows
 
     with open(ATTACKS_LOG, "r", encoding="utf-8", errors="ignore") as f:
         for line in f:
@@ -143,47 +135,33 @@ def parse_http_attacks():
                 continue
 
             ip_match = re.search(r"IP=([\d\.]+)", details)
-            ip = ip_match.group(1) if ip_match else details.split()[-1]
+            ip = ip_match.group(1) if ip_match else "127.0.0.1"
 
-            row = data[ip]
-            row["ip"] = ip
-            row["sessions"] += 1
-            row["attack_types"].add(attack)
-            row["last_seen"] = time_str
-
-            if attack == "VISIT" and " from " in details:
-                page = details.split(" from ")[0].strip()
-                row["pages"].add(page)
-
+            inputs = []
             if any(x in details for x in ["USER=", "PASS=", "PAYLOAD=", "FILE="]):
                 clean = re.sub(r"IP=[\d\.]+\s*", "", details)
-                row["inputs"].append(clean.strip())
+                inputs.append(clean.strip())
 
-    rows = []
-    for r in data.values():
-        severity = "Low"
-        for a in r["attack_types"]:
-            s = HTTP_ATTACK_SEVERITY.get(a, "Low")
-            if SEVERITY_ORDER.index(s) > SEVERITY_ORDER.index(severity):
-                severity = s
+            severity = HTTP_ATTACK_SEVERITY.get(attack, "Low")
 
-        rows.append({
-            "service": "HTTP",
-            "ip": r["ip"],
-            "country": r["country"],
-            "pages": list(r["pages"]) if r["pages"] else ["-"],
-            "attack_types": list(r["attack_types"]),
-            "sessions": r["sessions"],
-            "inputs": r["inputs"],
-            "commands": len(r["inputs"]),
-            "username": "-",
-            "password": "-",
-            "last_seen": r["last_seen"],
-            "last_commands": r["inputs"][-5:],
-            "severity": severity
-        })
+            rows.append({
+                "service": "HTTP",
+                "ip": ip,
+                "country": "LOCAL",
+                "pages": ["-"],
+                "attack_types": [attack],
+                "sessions": 1,
+                "inputs": inputs,
+                "commands": len(inputs),
+                "username": "-",
+                "password": "-",
+                "last_seen": time_str,
+                "last_commands": inputs[-5:],
+                "severity": severity
+            })
 
     return rows
+
 
 # ========= MAIN ANALYZE =========
 def analyze_all():
