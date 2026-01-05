@@ -2,7 +2,7 @@
   "127.0.0.1": {
     "country": "LOCAL",
     "severity": "LOW",
-    "last_seen": "2026-01-05T05:53:42.555169",
+    "last_seen": "2026-01-05T09:03:10.832921",
     "sessions": [
       {
         "id": "8e6ca7a8-7b2d-40ad-8694-b2a370c6cc83",
@@ -240,6 +240,20 @@
         ],
         "username": "aya",
         "password": "zerrouni"
+      },
+      {
+        "id": "5c2f7070-93ed-42b5-aa59-d7cc80dbabf2",
+        "service": "HTTP",
+        "start_time": "2026-01-05T09:03:10.826360",
+        "end_time": "2026-01-05T09:03:10.832912",
+        "commands": [
+          {
+            "cmd": "SQL_INJECTION payload=l;kdsg sg",
+            "time": "2026-01-05T09:03:10.830404"
+          }
+        ],
+        "username": "l;kdsg",
+        "password": "sg"
       }
     ]
   }

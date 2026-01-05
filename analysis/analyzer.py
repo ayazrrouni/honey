@@ -12,36 +12,25 @@ DANGEROUS_CMDS = [
     "python", "perl", "ruby", "nohup"
 ]
 
-# HTTP severity based on attack type (NOT commands)
 HTTP_ATTACK_SEVERITY = {
     "SQL_INJECTION": "High",
-    "LFI_ATTEMPT": "High",
-    "BRUTE_FORCE_ATTEMPT": "Medium",
+    "LFI": "High",
+    "BRUTE_FORCE": "Medium",
     "ADMIN_LOGIN": "Medium",
     "VISIT": "Low",
 }
 
+SEVERITY_RANK = {"Low": 1, "Medium": 2, "High": 3}
 
-def calculate_severity(service, commands, attack_type=None):
-    """
-    Calculate severity based on service type.
-    - SSH / FTP: score-based (commands + dangerous keywords)
-    - HTTP: attack-type based
-    """
 
-    # ===== HTTP LOGIC =====
-    if service == "HTTP":
-        return HTTP_ATTACK_SEVERITY.get(attack_type, "Low")
-
-    # ===== SSH / FTP LOGIC =====
+# ================= SEVERITY =================
+def calculate_severity(service, commands):
     score = 0
 
     if service == "SSH":
         score += 3
     elif service == "FTP":
         score += 2
-    else:
-        score += 1
 
     score += len(commands)
 
@@ -57,6 +46,7 @@ def calculate_severity(service, commands, attack_type=None):
     return "Low"
 
 
+# ================= ANALYZER =================
 def analyze_all():
     if not JSON_LOG.exists():
         return [], {}
@@ -65,57 +55,110 @@ def analyze_all():
         data = json.load(f)
 
     rows = []
-    seen_ips = defaultdict(set)
+
+    # -------- HTTP AGGREGATION --------
+    http_ips = defaultdict(lambda: {
+        "sessions": 0,
+        "usernames": set(),
+        "passwords": set(),
+        "attacks": set(),
+        "last_seen": None,
+        "severity": "Low"
+    })
 
     stats = {
-        "SSH": {"ips": 0, "sessions": 0, "commands": 0, "high": 0, "medium": 0, "low": 0},
-        "FTP": {"ips": 0, "sessions": 0, "commands": 0, "high": 0, "medium": 0, "low": 0},
-        "HTTP": {"ips": 0, "sessions": 0, "commands": 0, "high": 0, "medium": 0, "low": 0},
+        "SSH": {"ips": set(), "sessions": 0, "commands": 0, "high": 0, "medium": 0, "low": 0},
+        "FTP": {"ips": set(), "sessions": 0, "commands": 0, "high": 0, "medium": 0, "low": 0},
+        "HTTP": {"ips": set(), "sessions": 0, "commands": 0, "high": 0, "medium": 0, "low": 0},
     }
 
     for ip, info in data.items():
         for s in info.get("sessions", []):
-            service = s.get("service", "UNKNOWN")
+            service = s.get("service")
 
-            # ===== HTTP SESSION =====
+            # ================= HTTP =================
             if service == "HTTP":
-                attack_type = s.get("attack_type", "VISIT")
-                commands = []
-                severity = calculate_severity(service, commands, attack_type)
+                attack = "VISIT"
 
-            # ===== SSH / FTP SESSION =====
-            else:
+                for c in s.get("commands", []):
+                    cmd = c.get("cmd", "")
+                    if "SQL_INJECTION" in cmd:
+                        attack = "SQL_INJECTION"
+                    elif "LFI" in cmd:
+                        attack = "LFI"
+                    elif "BRUTE_FORCE" in cmd:
+                        attack = "BRUTE_FORCE"
+                    elif "ADMIN_LOGIN" in cmd:
+                        attack = "ADMIN_LOGIN"
+
+                sev = HTTP_ATTACK_SEVERITY.get(attack, "Low")
+
+                http = http_ips[ip]
+                http["sessions"] += 1
+                http["attacks"].add(attack)
+                http["usernames"].add(s.get("username", "-"))
+                http["passwords"].add(s.get("password", "-"))
+
+                last_time = s.get("end_time") or s.get("start_time")
+                if last_time:
+                    http["last_seen"] = last_time
+
+                if SEVERITY_RANK[sev] > SEVERITY_RANK[http["severity"]]:
+                    http["severity"] = sev
+
+                stats["HTTP"]["sessions"] += 1
+                stats["HTTP"]["ips"].add(ip)
+                stats["HTTP"][sev.lower()] += 1
+
+            # ================= SSH / FTP =================
+            elif service in ("SSH", "FTP"):
                 commands = [c["cmd"] for c in s.get("commands", [])]
                 severity = calculate_severity(service, commands)
 
-            last_time = s.get("end_time") or s.get("start_time")
-            last_seen = (
-                datetime.fromisoformat(last_time).strftime("%Y-%m-%d %H:%M")
-                if last_time else "-"
-            )
+                last_time = s.get("end_time") or s.get("start_time")
+                last_seen = (
+                    datetime.fromisoformat(last_time).strftime("%Y-%m-%d %H:%M")
+                    if last_time else "-"
+                )
 
-            row = {
-                "service": service,
-                "ip": ip,
-                "country": info.get("country", "LOCAL"),
-                "severity": severity,
-                "sessions": 1,
-                "commands": len(commands),
-                "username": s.get("username", "-") or "-",
-                "password": s.get("password", "-") or "-",
-                "last_seen": last_seen,
-                "last_commands": commands[-5:]
-            }
+                rows.append({
+                    "service": service,
+                    "ip": ip,
+                    "country": info.get("country", "LOCAL"),
+                    "severity": severity,
+                    "sessions": 1,
+                    "commands": len(commands),
+                    "username": s.get("username", "-"),
+                    "password": s.get("password", "-"),
+                    "last_seen": last_seen,
+                    "last_commands": commands[-5:]
+                })
 
-            rows.append(row)
-
-            if service in stats:
-                seen_ips[service].add(ip)
                 stats[service]["sessions"] += 1
                 stats[service]["commands"] += len(commands)
+                stats[service]["ips"].add(ip)
                 stats[service][severity.lower()] += 1
 
+    # ================= FINAL HTTP ROWS =================
+    for ip, h in http_ips.items():
+        rows.append({
+            "service": "HTTP",
+            "ip": ip,
+            "country": "LOCAL",
+            "severity": h["severity"],
+            "sessions": h["sessions"],
+            "commands": 0,
+            "username": ", ".join(filter(None, h["usernames"])),
+            "password": ", ".join(filter(None, h["passwords"])),
+            "last_seen": (
+                datetime.fromisoformat(h["last_seen"]).strftime("%Y-%m-%d %H:%M")
+                if h["last_seen"] else "-"
+            ),
+            "last_commands": list(h["attacks"])
+        })
+
+    # ================= STATS CLEAN =================
     for svc in stats:
-        stats[svc]["ips"] = len(seen_ips[svc])
+        stats[svc]["ips"] = len(stats[svc]["ips"])
 
     return rows, stats
