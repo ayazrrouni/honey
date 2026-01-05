@@ -50,7 +50,6 @@ def http():
         active="http"
     )
 
-# ========= API FOR AJAX =========
 @app.route("/api/stats")
 def api_stats():
     _, stats = analyze_all()

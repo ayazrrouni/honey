@@ -1,7 +1,7 @@
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, redirect
 import time
 import os
-from flask import send_file
+import re
 
 app = Flask(
     __name__,
@@ -11,18 +11,15 @@ app = Flask(
 
 LOG_FILE = "logs/attacks.log"
 
-
 def log_attack(action, detail):
     os.makedirs("logs", exist_ok=True)
     with open(LOG_FILE, "a") as f:
         f.write(f"{time.ctime()} | HTTP | {action} | {detail}\n")
 
-
 @app.route("/")
 def index():
     log_attack("VISIT", f"/ from {request.remote_addr}")
     return render_template("index.html")
-
 
 @app.route("/admin", methods=["GET", "POST"])
 def admin():
@@ -34,10 +31,18 @@ def admin():
             "ADMIN_LOGIN",
             f"IP={request.remote_addr} USER={username} PASS={password}"
         )
-        return "Access denied", 403
 
-    log_attack("VISIT", f"/admin from {request.remote_addr}")
+        return redirect("/admin/dashboard")
+
     return render_template("admin.html")
+
+@app.route("/admin/dashboard")
+def admin_dashboard():
+    log_attack(
+        "ADMIN_DASHBOARD",
+        f"IP={request.remote_addr}"
+    )
+    return render_template("dashboard.html")
 
 @app.route("/download")
 def download():
@@ -58,7 +63,53 @@ mysql:x:999:999:mysql:/var/lib/mysql:/bin/false
 
     return "File not found", 404
 
+@app.route("/bruteforce", methods=["GET", "POST"])
+def bruteforce():
+    error = None
+
+    if request.method == "POST":
+        username = request.form.get("username", "")
+        password = request.form.get("password", "")
+
+        log_attack(
+            "BRUTE_FORCE_ATTEMPT",
+            f"IP={request.remote_addr} USER={username} PASS={password}"
+        )
+
+        error = "Invalid username or password"
+
+    return render_template("bruteforce.html", error=error)
+
+SQL_PATTERNS = [
+    r"('|--|;|/\*|\*/|or\s+1=1|union\s+select|select\s+.*from)",
+]
+
+@app.route("/sql_login", methods=["GET", "POST"])
+def sql_login():
+    error = None
+
+    if request.method == "POST":
+        username = request.form.get("username", "")
+        password = request.form.get("password", "")
+
+        payload = f"{username} {password}"
+
+        is_sql = any(
+            re.search(p, payload, re.IGNORECASE)
+            for p in SQL_PATTERNS
+        )
+
+        if is_sql:
+            log_attack(
+                "SQL_INJECTION",
+                f"IP={request.remote_addr} PAYLOAD={payload}"
+            )
+            error = "SQL syntax error near '' at line 1"
+        else:
+            error = "Invalid credentials"
+
+    return render_template("sql_login.html", error=error)
+
 def start_http():
     print("[+] HTTP Honeypot listening on port 80")
     app.run(host="0.0.0.0", port=80, debug=False)
-
