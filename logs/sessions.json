@@ -2,7 +2,7 @@
   "127.0.0.1": {
     "country": "LOCAL",
     "severity": "LOW",
-    "last_seen": "2026-01-04T16:10:13.728119",
+    "last_seen": "2026-01-05T05:53:42.555169",
     "sessions": [
       {
         "id": "8e6ca7a8-7b2d-40ad-8694-b2a370c6cc83",
@@ -70,6 +70,176 @@
         ],
         "username": null,
         "password": null
+      },
+      {
+        "id": "ddd12f74-1bfc-4b7a-80b6-fc4a4e2a6738",
+        "service": "SSH",
+        "start_time": "2026-01-04T17:42:39.256024",
+        "end_time": null,
+        "commands": [
+          {
+            "cmd": "ls",
+            "time": "2026-01-04T17:42:44.162095"
+          },
+          {
+            "cmd": "pwd",
+            "time": "2026-01-04T17:42:52.898060"
+          }
+        ],
+        "username": null,
+        "password": null
+      },
+      {
+        "id": "d3319a1e-a657-4349-b296-2874b98f35a6",
+        "service": "HTTP",
+        "start_time": "2026-01-04T18:12:31.585346",
+        "end_time": "2026-01-04T18:12:31.590893",
+        "commands": [
+          {
+            "cmd": "ACCESS /admin/dashboard",
+            "time": "2026-01-04T18:12:31.588282"
+          }
+        ],
+        "username": null,
+        "password": null
+      },
+      {
+        "id": "48a7dd8e-fb86-447d-863b-87de0b3bbe02",
+        "service": "HTTP",
+        "start_time": "2026-01-04T18:12:35.347249",
+        "end_time": null,
+        "commands": [],
+        "username": null,
+        "password": null
+      },
+      {
+        "id": "3ddd4d00-9919-49d0-b4f5-ed47a623629e",
+        "service": "HTTP",
+        "start_time": "2026-01-04T18:12:41.378505",
+        "end_time": "2026-01-04T18:12:41.382904",
+        "commands": [
+          {
+            "cmd": "ADMIN_LOGIN USER=hjg PASS=hfjh",
+            "time": "2026-01-04T18:12:41.379894"
+          }
+        ],
+        "username": null,
+        "password": null
+      },
+      {
+        "id": "a864b82f-2107-449c-aee5-b546cca977d8",
+        "service": "HTTP",
+        "start_time": "2026-01-04T18:12:41.442647",
+        "end_time": "2026-01-04T18:12:41.447445",
+        "commands": [
+          {
+            "cmd": "ACCESS /admin/dashboard",
+            "time": "2026-01-04T18:12:41.444281"
+          }
+        ],
+        "username": null,
+        "password": null
+      },
+      {
+        "id": "bbda6d69-7b01-4310-808d-0c3e247860fc",
+        "service": "HTTP",
+        "start_time": "2026-01-04T18:13:07.736274",
+        "end_time": null,
+        "commands": [],
+        "username": null,
+        "password": null
+      },
+      {
+        "id": "02457fd8-4aed-4a12-b74d-085ce2a22a0d",
+        "service": "HTTP",
+        "start_time": "2026-01-04T18:13:10.964014",
+        "end_time": "2026-01-04T18:13:10.968737",
+        "commands": [
+          {
+            "cmd": "ADMIN_LOGIN USER=afd PASS=sdg",
+            "time": "2026-01-04T18:13:10.966461"
+          }
+        ],
+        "username": null,
+        "password": null
+      },
+      {
+        "id": "643e8bb7-83b4-4124-bb12-e323e8dd4204",
+        "service": "HTTP",
+        "start_time": "2026-01-04T18:13:11.031176",
+        "end_time": "2026-01-04T18:13:11.035465",
+        "commands": [
+          {
+            "cmd": "ACCESS /admin/dashboard",
+            "time": "2026-01-04T18:13:11.032488"
+          }
+        ],
+        "username": null,
+        "password": null
+      },
+      {
+        "id": "d67c87cf-617b-4625-9a77-3deedca676db",
+        "service": "HTTP",
+        "start_time": "2026-01-05T05:44:24.128010",
+        "end_time": null,
+        "commands": [
+          {
+            "cmd": "VISIT /",
+            "time": "2026-01-05T05:44:24.132470"
+          },
+          {
+            "cmd": "ADMIN_LOGIN user=hjf pass=jhfhj",
+            "time": "2026-01-05T05:44:40.047372"
+          },
+          {
+            "cmd": "ACCESS /admin/dashboard",
+            "time": "2026-01-05T05:44:40.123267"
+          }
+        ],
+        "username": null,
+        "password": null
+      },
+      {
+        "id": "abad63bb-ab08-43d3-9b6c-37bb946018f6",
+        "service": "HTTP",
+        "start_time": "2026-01-05T05:48:21.024068",
+        "end_time": "2026-01-05T05:48:21.030393",
+        "commands": [
+          {
+            "cmd": "ADMIN_LOGIN user=\u064a\u0633\u0644 pass=\u0633\u064a\u0644",
+            "time": "2026-01-05T05:48:21.027470"
+          }
+        ],
+        "username": null,
+        "password": null
+      },
+      {
+        "id": "be56aced-f98a-4060-87dc-c4e4a0999f32",
+        "service": "HTTP",
+        "start_time": "2026-01-05T05:53:10.631007",
+        "end_time": "2026-01-05T05:53:10.639403",
+        "commands": [
+          {
+            "cmd": "ADMIN_LOGIN",
+            "time": "2026-01-05T05:53:10.636198"
+          }
+        ],
+        "username": "aya",
+        "password": "aya"
+      },
+      {
+        "id": "14c6af08-c672-4706-bf56-d64b43a4d5c0",
+        "service": "HTTP",
+        "start_time": "2026-01-05T05:53:42.547717",
+        "end_time": "2026-01-05T05:53:42.555160",
+        "commands": [
+          {
+            "cmd": "ADMIN_LOGIN",
+            "time": "2026-01-05T05:53:42.552995"
+          }
+        ],
+        "username": "aya",
+        "password": "zerrouni"
       }
     ]
   }

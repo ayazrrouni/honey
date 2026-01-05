@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Honeycomb Admin</title>
+	<link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+
+	<style type="text/css">
+		body{
+			background-color: #2a3a49;
+			padding: 0;
+			margin: 0;
+			overflow: hidden;
+			font-family: Arial, sans-serif;
+		}
+		.container,.menu{
+			height: 140px;
+			width: 160px;
+			position: absolute;
+			margin: auto;
+			top: 0;
+			bottom: 0;
+			left: 0;
+			right: 0;
+			cursor: pointer;
+		}
+		.menu{
+			z-index: -1;
+			transform: scale(0.9);
+		}
+		.toggle{
+			height: 0;
+			width: 80px;
+			border-bottom: 70px solid #f9d230;
+			border-left: 40px solid transparent;
+			border-right: 40px solid transparent;
+			position: absolute;
+			top: 0;
+		}
+		.toggle:before{
+			content: ' ';
+			height: 0;
+			width: 80px;
+			border-top: 70px solid #f9d230;
+			border-left: 40px solid transparent;
+			border-right: 40px solid transparent;
+			position: absolute;
+			top: 70px;
+			left: -40px;
+		}
+		.item{
+			height: 0;
+			width: 80px;
+			border-bottom: 70px solid #fff;
+			border-left: 40px solid transparent;
+			border-right: 40px solid transparent;
+			position: absolute;
+			top: 0;
+			transition: 1s;
+		}
+		.item:before{
+			content: ' ';
+			height: 0;
+			width: 80px;
+			border-top: 70px solid #fff;
+			border-left: 40px solid transparent;
+			border-right: 40px solid transparent;
+			position: absolute;
+			top: 70px;
+			left: -40px;
+		}
+		#add{
+			font-size: 100px;
+			color: #fff;
+			position: relative;
+			top: 20px;
+			right: 1px;
+			transition: 1s;
+		}
+		a>.fa{
+			color: #2a3a49;
+			font-size: 60px;
+		}
+		a{
+			position: relative;
+			top: 40px;
+			left: 10px;
+		}
+		a>.fa:hover{
+			color: #f9d230;
+			transform: scale(1.3);
+			transition: 1s;
+		}
+
+		#infoBox{
+			position: absolute;
+			top: 0;
+			left: 50%;
+			transform: translateX(-50%) translateY(-120%);
+			background: rgba(0,0,0,0.75);
+			color: white;
+			padding: 25px 35px;
+			border-radius: 0 0 15px 15px;
+			min-width: 320px;
+			text-align: center;
+			transition: 0.5s ease;
+			opacity: 0;
+			pointer-events: none;
+		}
+		#infoBox.show{
+			transform: translateX(-50%) translateY(0);
+			opacity: 1;
+			pointer-events: auto;
+		}
+		#infoBox h2{
+			color: #f9d230;
+			margin-bottom: 10px;
+		}
+	</style>
+</head>
+
+<body>
+
+	<div class="container" onclick="expand()">
+		<div class="toggle">
+			<i class="fa fa-plus" id="add"></i>
+		</div>
+	</div>
+
+	<div class="menu" id="menu">
+		<div class="item">
+			<a onclick="showBox('server')"><i class="fa fa-server"></i></a>
+		</div>
+		<div class="item">
+			<a onclick="showBox('users')"><i class="fa fa-users"></i></a>
+		</div>
+		<div class="item">
+			<a onclick="showBox('backup')"><i class="fa fa-clock-o"></i></a>
+		</div>
+		<div class="item">
+			<a onclick="showBox('manage')"><i class="fa fa-cog"></i></a>
+		</div>
+		<div class="item">
+			<a href="{{ url_for('index') }}"><i class="fa fa-home"></i></a>
+		</div>
+		<div class="item">
+			<a href="{{ url_for('admin') }}"><i class="fa fa-sign-out"></i></a>
+		</div>
+	</div>
+
+
+	<div id="infoBox">
+		<h2 id="infoTitle"></h2>
+		<p id="infoContent"></p>
+	</div>
+
+	<script>
+	
+		var j=0;
+		var i=document.getElementById("menu").childNodes;
+
+		function expand(){
+			if(j==0){
+				add.style.transform='rotate(45deg)';
+				menu.style.transform='scale(1)';
+				i[1].style.transform='translateY(-160px)';
+				i[3].style.transform='translate(140px,-80px)';
+				i[5].style.transform='translate(140px,80px)';
+				i[7].style.transform='translateY(160px)';
+				i[9].style.transform='translate(-140px,80px)';
+				i[11].style.transform='translate(-140px,-80px)';
+				j=1;
+			}else{
+				add.style.transform='rotate(0)';
+				menu.style.transform='scale(0.9)';
+				i[1].style.transform='translateY(0)';
+				i[3].style.transform='translate(0)';
+				i[5].style.transform='translate(0)';
+				i[7].style.transform='translateY(0)';
+				i[9].style.transform='translate(0)';
+				i[11].style.transform='translate(0)';
+				j=0;
+			}
+		}
+
+
+		let open=false;
+		const box=document.getElementById("infoBox");
+
+		function showBox(type){
+			if(open){
+				box.classList.remove("show");
+				open=false;
+				return;
+			}
+
+			let title="",content="";
+
+			if(type==="server"){
+				title="Server Status";
+				content="Running";
+			}
+			if(type==="users"){
+				title="Users Count";
+				content="128 users";
+			}
+			if(type==="backup"){
+				title="Last Backup";
+				content="Today at 02:14 AM";
+			}
+			if(type==="manage"){
+				title="Management";
+				content="Users · Settings · Logs · Database";
+			}
+
+			document.getElementById("infoTitle").innerText=title;
+			document.getElementById("infoContent").innerText=content;
+			box.classList.add("show");
+			open=true;
+		}
+	</script>
+
+</body>
+</html>
+

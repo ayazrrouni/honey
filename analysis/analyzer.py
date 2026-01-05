@@ -12,9 +12,30 @@ DANGEROUS_CMDS = [
     "python", "perl", "ruby", "nohup"
 ]
 
+# HTTP severity based on attack type (NOT commands)
+HTTP_ATTACK_SEVERITY = {
+    "SQL_INJECTION": "High",
+    "LFI_ATTEMPT": "High",
+    "BRUTE_FORCE_ATTEMPT": "Medium",
+    "ADMIN_LOGIN": "Medium",
+    "VISIT": "Low",
+}
 
-def calculate_severity(service, commands):
+
+def calculate_severity(service, commands, attack_type=None):
+    """
+    Calculate severity based on service type.
+    - SSH / FTP: score-based (commands + dangerous keywords)
+    - HTTP: attack-type based
+    """
+
+    # ===== HTTP LOGIC =====
+    if service == "HTTP":
+        return HTTP_ATTACK_SEVERITY.get(attack_type, "Low")
+
+    # ===== SSH / FTP LOGIC =====
     score = 0
+
     if service == "SSH":
         score += 3
     elif service == "FTP":
@@ -53,13 +74,25 @@ def analyze_all():
     }
 
     for ip, info in data.items():
-        for s in info["sessions"]:
-            service = s["service"]
-            commands = [c["cmd"] for c in s["commands"]]
-            severity = calculate_severity(service, commands)
+        for s in info.get("sessions", []):
+            service = s.get("service", "UNKNOWN")
 
-            last_time = s["end_time"] or s["start_time"]
-            last_seen = datetime.fromisoformat(last_time).strftime("%Y-%m-%d %H:%M")
+            # ===== HTTP SESSION =====
+            if service == "HTTP":
+                attack_type = s.get("attack_type", "VISIT")
+                commands = []
+                severity = calculate_severity(service, commands, attack_type)
+
+            # ===== SSH / FTP SESSION =====
+            else:
+                commands = [c["cmd"] for c in s.get("commands", [])]
+                severity = calculate_severity(service, commands)
+
+            last_time = s.get("end_time") or s.get("start_time")
+            last_seen = (
+                datetime.fromisoformat(last_time).strftime("%Y-%m-%d %H:%M")
+                if last_time else "-"
+            )
 
             row = {
                 "service": service,
@@ -76,10 +109,11 @@ def analyze_all():
 
             rows.append(row)
 
-            seen_ips[service].add(ip)
-            stats[service]["sessions"] += 1
-            stats[service]["commands"] += len(commands)
-            stats[service][severity.lower()] += 1
+            if service in stats:
+                seen_ips[service].add(ip)
+                stats[service]["sessions"] += 1
+                stats[service]["commands"] += len(commands)
+                stats[service][severity.lower()] += 1
 
     for svc in stats:
         stats[svc]["ips"] = len(seen_ips[svc])

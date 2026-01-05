@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div id="sign-up">
+
+<form method="POST" action="/bruteforce">
+    <h1>Admin</h1>
+
+    {% if error %}
+    <p class="error">{{ error }}</p>
+    {% endif %}
+
+    <fieldset class="top">
+        <label>👤</label>
+        <input type="text" name="username" placeholder="Username"autocomplete="off"  required>
+    </fieldset>
+
+    <fieldset>
+        <label>🔒</label>
+        <input type="password" name="password" placeholder="Password" autocomplete="new-password"  required>
+    </fieldset>
+
+    <button type="submit">Login</button>
+
+    <a href="/" class="exit-btn">✖ Exit</a>
+</form>
+    <img src="{{ url_for('static', filename='mony.png') }}" class="money">
+
+</div>
+
+</body>
+</html>
+

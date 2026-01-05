@@ -3,9 +3,17 @@ from analysis.analyzer import analyze_all
 
 app = Flask(__name__)
 
+
 @app.route("/")
 def index():
-    return stats()
+    _, stats = analyze_all()
+    return render_template(
+        "stats.html",
+        title="Honeypot Statistics",
+        stats=stats,
+        active="stats"
+    )
+
 
 @app.route("/stats")
 def stats():
@@ -16,6 +24,7 @@ def stats():
         stats=stats,
         active="stats"
     )
+
 
 @app.route("/ssh")
 def ssh():
@@ -28,6 +37,7 @@ def ssh():
         active="ssh"
     )
 
+
 @app.route("/ftp")
 def ftp():
     rows, _ = analyze_all()
@@ -39,8 +49,9 @@ def ftp():
         active="ftp"
     )
 
+
 @app.route("/http")
-def http():
+def http_logs():
     rows, _ = analyze_all()
     rows = [r for r in rows if r["service"] == "HTTP"]
     return render_template(
@@ -50,11 +61,13 @@ def http():
         active="http"
     )
 
+
 # ========= API FOR AJAX =========
 @app.route("/api/stats")
 def api_stats():
     _, stats = analyze_all()
     return jsonify(stats)
+
 
 if __name__ == "__main__":
     app.run(debug=True)
