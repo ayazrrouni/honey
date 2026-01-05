@@ -5,7 +5,7 @@ import re
 from core.logger import (
     start_session,
     log_command,
-    log_ftp_credentials,   # نستعملها للـ HTTP ثاني
+    log_ftp_credentials,
     end_session
 )
 
@@ -31,11 +31,9 @@ def admin():
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "").strip()
 
-        # ❗ سجل فقط إذا كاين بيانات
-        if username or password:
-            start_session(ip, session_id, service="HTTP")
+        start_session(ip, session_id, service="HTTP")
 
-            # ⬅️ هنا الحل
+        if username or password:
             log_ftp_credentials(
                 ip,
                 session_id,
@@ -43,9 +41,13 @@ def admin():
                 password=password
             )
 
-            log_command(ip, session_id, "ADMIN_LOGIN")
-            end_session(ip, session_id)
+            log_command(
+                ip,
+                session_id,
+                f"ADMIN_LOGIN user={username} pass={password}"
+            )
 
+        end_session(ip, session_id)
         return redirect("/admin/dashboard")
 
     return render_template("admin.html")
@@ -68,19 +70,22 @@ def bruteforce():
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "").strip()
 
-        if username or password:
-            start_session(ip, session_id, service="HTTP")
+        start_session(ip, session_id, service="HTTP")
 
-            log_ftp_credentials(
-                ip,
-                session_id,
-                username=username,
-                password=password
-            )
+        log_ftp_credentials(
+            ip,
+            session_id,
+            username=username,
+            password=password
+        )
 
-            log_command(ip, session_id, "BRUTE_FORCE")
-            end_session(ip, session_id)
+        log_command(
+            ip,
+            session_id,
+            f"BRUTE_FORCE user={username} pass={password}"
+        )
 
+        end_session(ip, session_id)
         error = "Invalid username or password"
 
     return render_template("bruteforce.html", error=error)
@@ -105,26 +110,31 @@ def sql_login():
 
         is_sql = any(re.search(p, payload, re.IGNORECASE) for p in SQL_PATTERNS)
 
+        start_session(ip, session_id, service="HTTP")
+
+        log_ftp_credentials(
+            ip,
+            session_id,
+            username=username,
+            password=password
+        )
+
         if is_sql:
-            start_session(ip, session_id, service="HTTP")
-
-            log_ftp_credentials(
-                ip,
-                session_id,
-                username=username,
-                password=password
-            )
-
             log_command(
                 ip,
                 session_id,
                 f"SQL_INJECTION payload={payload}"
             )
-            end_session(ip, session_id)
-
-            error = "SQL syntax error near '' at line 1"
+            error = "SQL syntax error near ''"
         else:
+            log_command(
+                ip,
+                session_id,
+                f"LOGIN_FAILED payload={payload}"
+            )
             error = "Invalid credentials"
+
+        end_session(ip, session_id)
 
     return render_template("sql_login.html", error=error)
 

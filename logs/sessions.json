@@ -2,7 +2,7 @@
   "127.0.0.1": {
     "country": "LOCAL",
     "severity": "LOW",
-    "last_seen": "2026-01-05T09:03:10.832921",
+    "last_seen": "2026-01-05T09:39:16.656066",
     "sessions": [
       {
         "id": "8e6ca7a8-7b2d-40ad-8694-b2a370c6cc83",
@@ -254,6 +254,34 @@
         ],
         "username": "l;kdsg",
         "password": "sg"
+      },
+      {
+        "id": "db9e2f12-9557-4ed8-a072-2878b97cf574",
+        "service": "HTTP",
+        "start_time": "2026-01-05T09:16:37.925365",
+        "end_time": "2026-01-05T09:16:37.933929",
+        "commands": [
+          {
+            "cmd": "LOGIN_FAILED payload=kjs sdg",
+            "time": "2026-01-05T09:16:37.930849"
+          }
+        ],
+        "username": "kjs",
+        "password": "sdg"
+      },
+      {
+        "id": "89c1c531-9f93-4420-931a-9086efd8720e",
+        "service": "HTTP",
+        "start_time": "2026-01-05T09:39:16.644704",
+        "end_time": "2026-01-05T09:39:16.656049",
+        "commands": [
+          {
+            "cmd": "LOGIN_FAILED payload=hello hi",
+            "time": "2026-01-05T09:39:16.650094"
+          }
+        ],
+        "username": "hello",
+        "password": "hi"
       }
     ]
   }
