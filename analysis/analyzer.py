@@ -16,6 +16,17 @@ DANGEROUS_CMDS = [
     "python", "perl", "ruby", "nohup"
 ]
 
+HTTP_ATTACK_SEVERITY = {
+    "SQL_INJECTION": "High",
+    "LFI_ATTEMPT": "High",
+    "BRUTE_FORCE_ATTEMPT": "Medium",
+    "ADMIN_LOGIN": "Medium",
+    "ADMIN_DASHBOARD": "Low",
+    "VISIT": "Low"
+}
+
+SEVERITY_ORDER = ["Low", "Medium", "High"]
+
 # ========= SEVERITY =========
 def calculate_severity(service, commands):
     score = 0
@@ -41,7 +52,7 @@ def calculate_severity(service, commands):
     return "Low"
 
 
-# ========= HTTP PARSER (IP واحد = سطر واحد) =========
+# ========= HTTP PARSER =========
 def parse_http_attacks():
     data = defaultdict(lambda: {
         "ip": "",
@@ -85,13 +96,20 @@ def parse_http_attacks():
                 page = details.split(" from ")[0].strip()
                 row["pages"].add(page)
 
-            # ===== INPUTS (credentials / payloads) =====
+            # ===== INPUTS / PAYLOADS (remove IP) =====
             if any(x in details for x in ["USER=", "PASS=", "PAYLOAD=", "FILE="]):
-                row["inputs"].append(details)
+                clean = re.sub(r"IP=[\d\.]+\s*", "", details)
+                row["inputs"].append(clean.strip())
 
-    # ===== FORMAT FOR DASHBOARD =====
     rows = []
     for r in data.values():
+        # determine highest severity for this IP
+        severity = "Low"
+        for a in r["attack_types"]:
+            s = HTTP_ATTACK_SEVERITY.get(a, "Low")
+            if SEVERITY_ORDER.index(s) > SEVERITY_ORDER.index(severity):
+                severity = s
+
         rows.append({
             "service": "HTTP",
             "ip": r["ip"],
@@ -104,12 +122,11 @@ def parse_http_attacks():
             "username": "-",
             "password": "-",
             "last_seen": r["last_seen"],
-            "last_commands": r["inputs"][:5],
-            "severity": "Low"  # HTTP severity ثابتة حالياً
+            "last_commands": r["inputs"][-5:],
+            "severity": severity
         })
 
     return rows
-
 
 
 # ========= MAIN ANALYZE =========
@@ -123,9 +140,9 @@ def analyze_all():
         "HTTP": {"ips": 0, "sessions": 0, "commands": 0, "high": 0, "medium": 0, "low": 0},
     }
 
-    # ===== SSH / FTP (كما كان) =====
+    # ===== SSH / FTP =====
     if JSON_LOG.exists():
-        with open(JSON_LOG, "r", encoding="utf-8") as f:
+        with open(JSON_LOG, "r") as f:
             data = json.load(f)
 
         for ip, info in data.items():
@@ -143,11 +160,10 @@ def analyze_all():
                     if last_time else "-"
                 )
 
-                row = {
+                rows.append({
                     "service": service,
                     "ip": ip,
                     "country": info.get("country", "LOCAL"),
-                    "attack": "SESSION",
                     "severity": severity,
                     "sessions": 1,
                     "commands": len(commands),
@@ -155,19 +171,16 @@ def analyze_all():
                     "password": s.get("password", "-") or "-",
                     "last_seen": last_seen,
                     "last_commands": commands[-5:]
-                }
-
-                rows.append(row)
+                })
 
                 seen_ips[service].add(ip)
                 stats[service]["sessions"] += 1
                 stats[service]["commands"] += len(commands)
                 stats[service][severity.lower()] += 1
 
-    # ===== HTTP (مجمع per IP) =====
+    # ===== HTTP =====
     for row in parse_http_attacks():
         rows.append(row)
-
         seen_ips["HTTP"].add(row["ip"])
         stats["HTTP"]["sessions"] += row["sessions"]
         stats["HTTP"]["commands"] += row["commands"]
