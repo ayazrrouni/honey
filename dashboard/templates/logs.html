@@ -28,6 +28,54 @@
   <div class="chart-container table-container">
 
     {% if rows %}
+
+    <!-- ================= HTTP TABLE ================= -->
+    {% if active == "http" %}
+    <table id="honeypotTable">
+      <thead>
+        <tr>
+          <th>IP</th>
+          <th>Pages</th>
+          <th>Attack Types</th>
+          <th>Sessions</th>
+          <th>Inputs / Payloads</th>
+          <th>Last Seen</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <td class="mono">{{ r.ip }}</td>
+
+          <td>
+            {% for p in r.pages %}
+              <div class="cmd">{{ p }}</div>
+            {% endfor %}
+          </td>
+
+          <td>
+            {% for a in r.attack_types %}
+              <span class="sev {{ r.severity|lower }}">{{ a }}</span>
+            {% endfor %}
+          </td>
+
+          <td>{{ r.sessions }}</td>
+
+          <td class="mono">
+            {% for i in r.inputs %}
+              <div class="cmd">{{ i }}</div>
+            {% endfor %}
+          </td>
+
+          <td>{{ r.last_seen }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <!-- ================= SSH / FTP TABLE ================= -->
+    {% else %}
     <table id="honeypotTable">
       <thead>
         <tr>
@@ -60,12 +108,8 @@
           </td>
 
           {% if active == "ftp" %}
-            <td class="mono">
-              {{ r.username if r.username else "-" }}
-            </td>
-            <td class="mono">
-              {{ r.password if r.password else "-" }}
-            </td>
+            <td class="mono">{{ r.username }}</td>
+            <td class="mono">{{ r.password }}</td>
           {% endif %}
 
           <td>{{ r.sessions }}</td>
@@ -81,6 +125,8 @@
         {% endfor %}
       </tbody>
     </table>
+    {% endif %}
+
     {% else %}
       <p>No data available.</p>
     {% endif %}

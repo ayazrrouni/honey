@@ -16,24 +16,10 @@ DANGEROUS_CMDS = [
     "python", "perl", "ruby", "nohup"
 ]
 
-HTTP_ATTACK_SEVERITY = {
-    "SQL_INJECTION": "High",
-    "LFI": "High",
-    "BRUTE_FORCE_ATTEMPT": "Medium",
-    "ADMIN_LOGIN": "Medium",
-    "ADMIN_DASHBOARD": "Low",
-    "VISIT": "Low"
-}
-
-SEVERITY_COLOR = {
-    "High": "red",
-    "Medium": "orange",
-    "Low": "green"
-}
-
 # ========= SEVERITY =========
 def calculate_severity(service, commands):
     score = 0
+
     if service == "SSH":
         score += 3
     elif service == "FTP":
@@ -55,15 +41,23 @@ def calculate_severity(service, commands):
     return "Low"
 
 
-# ========= HTTP PARSER =========
+# ========= HTTP PARSER (IP واحد = سطر واحد) =========
 def parse_http_attacks():
-    rows = []
+    data = defaultdict(lambda: {
+        "ip": "",
+        "country": "LOCAL",
+        "pages": set(),
+        "attack_types": set(),
+        "sessions": 0,
+        "inputs": [],
+        "last_seen": ""
+    })
 
     if not ATTACKS_LOG.exists():
-        return rows
+        return []
 
     with open(ATTACKS_LOG, "r", encoding="utf-8", errors="ignore") as f:
-        for idx, line in enumerate(f, start=1):
+        for line in f:
             parts = line.strip().split(" | ", 3)
             if len(parts) < 4:
                 continue
@@ -72,28 +66,50 @@ def parse_http_attacks():
             if service != "HTTP":
                 continue
 
-            ip = re.search(r"IP=([\d\.]+)", details)
-            user = re.search(r"USER=([^\s]+)", details)
-            pwd = re.search(r"PASS=([^\s]+)", details)
-            payload = re.search(r"PAYLOAD=(.+)", details)
+            # ===== IP =====
+            ip_match = re.search(r"IP=([\d\.]+)", details)
+            if ip_match:
+                ip = ip_match.group(1)
+            else:
+                # VISIT case: "/ from 127.0.0.1"
+                ip = details.split()[-1]
 
-            rows.append({
-                "id": idx,
-                "service": "HTTP",
-                "ip": ip.group(1) if ip else "UNKNOWN",
-                "country": "LOCAL",
-                "attack": attack,
-                "severity": HTTP_ATTACK_SEVERITY.get(attack, "Low"),
-                "sessions": 1,
-                "commands": len(payload.group(1).split()) if payload else 0,
-                "username": user.group(1) if user else "-",
-                "password": pwd.group(1) if pwd else "-",
-                "last_seen": time_str,
-                "last_commands": [],  # ضروري للـ dashboard
-                "payload": payload.group(1).strip() if payload else details
-            })
+            row = data[ip]
+            row["ip"] = ip
+            row["sessions"] += 1
+            row["attack_types"].add(attack)
+            row["last_seen"] = time_str
+
+            # ===== PAGE (only VISIT) =====
+            if attack == "VISIT" and " from " in details:
+                page = details.split(" from ")[0].strip()
+                row["pages"].add(page)
+
+            # ===== INPUTS (credentials / payloads) =====
+            if any(x in details for x in ["USER=", "PASS=", "PAYLOAD=", "FILE="]):
+                row["inputs"].append(details)
+
+    # ===== FORMAT FOR DASHBOARD =====
+    rows = []
+    for r in data.values():
+        rows.append({
+            "service": "HTTP",
+            "ip": r["ip"],
+            "country": r["country"],
+            "pages": list(r["pages"]) if r["pages"] else ["-"],
+            "attack_types": list(r["attack_types"]),
+            "sessions": r["sessions"],
+            "inputs": r["inputs"],
+            "commands": len(r["inputs"]),
+            "username": "-",
+            "password": "-",
+            "last_seen": r["last_seen"],
+            "last_commands": r["inputs"][:5],
+            "severity": "Low"  # HTTP severity ثابتة حالياً
+        })
 
     return rows
+
 
 
 # ========= MAIN ANALYZE =========
@@ -107,9 +123,9 @@ def analyze_all():
         "HTTP": {"ips": 0, "sessions": 0, "commands": 0, "high": 0, "medium": 0, "low": 0},
     }
 
-    # ===== SSH / FTP =====
+    # ===== SSH / FTP (كما كان) =====
     if JSON_LOG.exists():
-        with open(JSON_LOG) as f:
+        with open(JSON_LOG, "r", encoding="utf-8") as f:
             data = json.load(f)
 
         for ip, info in data.items():
@@ -127,7 +143,7 @@ def analyze_all():
                     if last_time else "-"
                 )
 
-                rows.append({
+                row = {
                     "service": service,
                     "ip": ip,
                     "country": info.get("country", "LOCAL"),
@@ -139,18 +155,21 @@ def analyze_all():
                     "password": s.get("password", "-") or "-",
                     "last_seen": last_seen,
                     "last_commands": commands[-5:]
-                })
+                }
+
+                rows.append(row)
 
                 seen_ips[service].add(ip)
                 stats[service]["sessions"] += 1
                 stats[service]["commands"] += len(commands)
                 stats[service][severity.lower()] += 1
 
-    # ===== HTTP =====
+    # ===== HTTP (مجمع per IP) =====
     for row in parse_http_attacks():
         rows.append(row)
+
         seen_ips["HTTP"].add(row["ip"])
-        stats["HTTP"]["sessions"] += 1
+        stats["HTTP"]["sessions"] += row["sessions"]
         stats["HTTP"]["commands"] += row["commands"]
         stats["HTTP"][row["severity"].lower()] += 1
 
