@@ -59,7 +59,7 @@ def extract_ip(line):
     return match.group(1) if match else "127.0.0.1"
 
 def parse_time(line):
-    # يفترض أن timestamp في بداية السطر بالشكل [YYYY-MM-DD HH:MM:SS]
+
     match = re.match(r"\[(.*?)\]", line)
     if match:
         return match.group(1)
@@ -195,7 +195,7 @@ def analyze_all():
         "HTTP": {"ips": 0, "sessions": 0, "commands": 0, "high": 0, "medium": 0, "low": 0},
     }
 
-    # ===== SSH / FTP من JSON =====
+    # ===== SSH / FTP  =====
     if JSON_LOG.exists():
         with open(JSON_LOG, "r") as f:
             data = json.load(f)
@@ -233,7 +233,7 @@ def analyze_all():
                 stats[service]["commands"] += len(commands)
                 stats[service][severity.lower()] += 1
 
-    # ===== FTP من الـ ftp.log مباشرة =====
+    # ===== FTP=====
     for row in analyze_ftp():
         rows.append(row)
         seen_ips["FTP"].add(row["ip"])

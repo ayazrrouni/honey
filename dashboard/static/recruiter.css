@@ -213,7 +213,7 @@ body {
 ================================ */
 .table-actions {
   justify-content: space-between;
-  margin-bottom: 24px; /* ⬅️ مسافة عن الجدول */
+  margin-bottom: 24px;
 }
 
 .table-search {
@@ -260,9 +260,9 @@ body {
 #honeypotTable thead th {
   text-align: left;
   padding: 16px;
-  font-size: 14px;          /* ⬅️ أكبر */
+  font-size: 14px;         
   font-weight: 600;
-  color: #e5e7eb;           /* ⬅️ أفتح */
+  color: #e5e7eb;           
   border-bottom: 1px solid rgba(255,255,255,0.15);
 }
 

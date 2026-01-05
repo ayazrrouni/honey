@@ -54,7 +54,7 @@ class FakeShell:
         if not cmd:
             return ""
 
-        # حفظ التاريخ
+     
         self.history.append(cmd)
 
         parts = cmd.split()
@@ -359,7 +359,6 @@ class FakeShell:
         if filename not in files:
             return f"chmod: cannot access '{filename}': No such file\n"
 
-        # Fake only: لا نغيّر صلاحيات حقيقية
         return ""
 
     def _chown(self, parts):
@@ -370,7 +369,7 @@ class FakeShell:
         return ""
 
     def _execute_fake(self, target):
-        # محاولة تنفيذ (نرفع severity في الداشبورد)
+        
         return f"{target}: Permission denied\n"
 
 
@@ -381,7 +380,7 @@ def handle_command(cmd, session):
     if "shell" not in session:
         session["shell"] = FakeShell(session.get("user", "root"))
 
-    # 🔐 تسجيل الأوامر (بدون لمس FakeShell)
+    
     os.makedirs("logs", exist_ok=True)
 
     user = session.get("user", "unknown")

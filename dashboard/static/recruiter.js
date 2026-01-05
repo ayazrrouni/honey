@@ -131,6 +131,6 @@ document.addEventListener("DOMContentLoaded", () => {
     .then(r => r.json())
     .then(data => {
       initCharts(data);
-      setInterval(fetchStats, 5000); // كل 5 ثواني
+      setInterval(fetchStats, 5000);
     });
 });
