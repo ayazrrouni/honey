@@ -49,7 +49,7 @@ def handle_client(client, addr):
 
     logging.info(f"[SSH] Connection from {ip}")
 
-    # 🔴 start session
+  
     start_session(ip, session_id, service="ssh")
 
     transport = None
@@ -67,12 +67,10 @@ def handle_client(client, addr):
             logging.warning(f"[SSH] No channel from {ip}")
             return
 
-        # username الحقيقي
         username = server.username or "test"
 
         shell = FakeShell(username)
 
-        # ✅ session فيها ip + user (المهم للدashboard)
         session = {
             "shell": shell,
             "ip": ip,
@@ -88,7 +86,6 @@ def handle_client(client, addr):
 
             logging.info(f"[SSH] {ip} CMD: {cmd}")
 
-            # 🔴 log command (session logger)
             log_command(ip, session_id, cmd)
 
             output, exit_flag = handle_command(cmd, session)
@@ -105,7 +102,7 @@ def handle_client(client, addr):
         logging.error(f"[SSH] Error {ip}: {e}")
 
     finally:
-        # 🔴 end session always
+       
         end_session(ip, session_id)
 
         if chan:
