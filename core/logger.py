@@ -3,7 +3,6 @@ from pathlib import Path
 from datetime import datetime
 from threading import Lock
 import requests
-import uuid
 
 lock = Lock()
 
@@ -13,9 +12,6 @@ JSON_LOG = BASE_DIR / "logs" / "sessions.json"
 DANGEROUS = ["wget", "curl", "nc", "bash", "chmod", "scp"]
 
 
-# ======================
-# Internal helpers
-# ======================
 def _load():
     if JSON_LOG.exists():
         with open(JSON_LOG, "r") as f:
@@ -29,9 +25,6 @@ def _save(data):
         json.dump(data, f, indent=2)
 
 
-# ======================
-# Session management
-# ======================
 def start_session(ip, session_id, service="ssh"):
     with lock:
         data = _load()
@@ -58,22 +51,6 @@ def start_session(ip, session_id, service="ssh"):
         _save(data)
 
 
-def end_session(ip, session_id):
-    with lock:
-        data = _load()
-
-        for s in data.get(ip, {}).get("sessions", []):
-            if s["id"] == session_id and s["end_time"] is None:
-                s["end_time"] = datetime.now().isoformat()
-                break
-
-        data[ip]["last_seen"] = datetime.now().isoformat()
-        _save(data)
-
-
-# ======================
-# SSH / FTP logging
-# ======================
 def log_command(ip, session_id, command):
     with lock:
         data = _load()
@@ -93,15 +70,14 @@ def log_command(ip, session_id, command):
             for sess in data[ip]["sessions"]
             for c in sess["commands"]
         ]
-
         data[ip]["severity"] = calc_severity(all_cmds)
+
         _save(data)
 
 
 def log_ftp_credentials(ip, session_id, username=None, password=None):
     with lock:
         data = _load()
-
         for s in data.get(ip, {}).get("sessions", []):
             if s["id"] == session_id:
                 if username:
@@ -109,57 +85,20 @@ def log_ftp_credentials(ip, session_id, username=None, password=None):
                 if password:
                     s["password"] = password
                 break
-
         _save(data)
 
 
-# ======================
-# HTTP logging (NEW)
-# ======================
-def log_http_attack(ip, attack_type, username="-", password="-"):
-    """
-    يسجل هجمات HTTP في sessions.json
-    (متوافق 100% مع analyzer.py)
-    """
+def end_session(ip, session_id):
     with lock:
         data = _load()
-
-        if ip not in data:
-            data[ip] = {
-                "country": get_country(ip),
-                "severity": "LOW",
-                "last_seen": None,
-                "sessions": []
-            }
-
-        now = datetime.now().isoformat()
-
-        session = {
-            "id": str(uuid.uuid4()),
-            "service": "HTTP",
-            "attack_type": attack_type,
-            "username": username or "-",
-            "password": password or "-",
-            "start_time": now,
-            "end_time": now,
-            "commands": []
-        }
-
-        data[ip]["sessions"].append(session)
-        data[ip]["last_seen"] = now
-
-        # Severity logic for HTTP
-        if attack_type in ["SQL_INJECTION", "BRUTE_FORCE", "ADMIN_LOGIN"]:
-            data[ip]["severity"] = "HIGH"
-        else:
-            data[ip]["severity"] = "LOW"
-
+        for s in data.get(ip, {}).get("sessions", []):
+            if s["id"] == session_id and s["end_time"] is None:
+                s["end_time"] = datetime.now().isoformat()
+                break
+        data[ip]["last_seen"] = datetime.now().isoformat()
         _save(data)
 
 
-# ======================
-# Utils
-# ======================
 def get_country(ip):
     if ip.startswith(("127.", "192.168")):
         return "LOCAL"
@@ -169,7 +108,7 @@ def get_country(ip):
             timeout=3
         )
         return r.json().get("country", "N/A")
-    except Exception:
+    except:
         return "N/A"
 
 

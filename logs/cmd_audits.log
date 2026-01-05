@@ -77,5 +77,3 @@
 [2026-01-04 16:09:54] unknown | unknown | ls
 [2026-01-04 16:09:56] unknown | unknown | pwd
 [2026-01-04 16:10:02] unknown | unknown | whoami
-[2026-01-04 17:42:44] 127.0.0.1 | test | ls
-[2026-01-04 17:42:52] 127.0.0.1 | test | pwd

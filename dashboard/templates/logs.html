@@ -1,22 +1,29 @@
 {% extends "base.html" %}
 {% block content %}
 
-<!-- ACTION BAR -->
+<!-- ===============================
+     ACTION BAR (SEARCH + EXPORT)
+================================ -->
 <div class="chart-container-wrapper">
   <div class="chart-container table-actions">
+
     <input
       type="text"
       id="searchInput"
       placeholder="Search IP..."
       class="table-search"
     >
+
     <button class="export-btn" onclick="exportTable()">
       Export CSV
     </button>
+
   </div>
 </div>
 
-<!-- LOGS TABLE -->
+<!-- ===============================
+     LOGS TABLE
+================================ -->
 <div class="chart-container-wrapper">
   <div class="chart-container table-container">
 
@@ -26,11 +33,17 @@
         <tr>
           <th>IP</th>
           <th>Country</th>
-          <th>Service</th>
           <th>Severity</th>
+
+          {% if active == "ftp" %}
+            <th>Username</th>
+            <th>Password</th>
+          {% endif %}
+
           <th>Sessions</th>
+          <th>Commands</th>
           <th>Last Seen</th>
-          <th>Details</th>
+          <th>Last Commands</th>
         </tr>
       </thead>
 
@@ -39,27 +52,30 @@
         <tr>
           <td class="mono">{{ r.ip }}</td>
           <td>{{ r.country }}</td>
-          <td>{{ r.service }}</td>
+
           <td>
             <span class="sev {{ r.severity|lower }}">
               {{ r.severity }}
             </span>
           </td>
+
+          {% if active == "ftp" %}
+            <td class="mono">
+              {{ r.username if r.username else "-" }}
+            </td>
+            <td class="mono">
+              {{ r.password if r.password else "-" }}
+            </td>
+          {% endif %}
+
           <td>{{ r.sessions }}</td>
+          <td>{{ r.commands }}</td>
           <td>{{ r.last_seen }}</td>
+
           <td class="mono">
-
-            {% if r.service == "HTTP" %}
-              <div><b>Attack:</b> {{ r.attack }}</div>
-              <div><b>User:</b> {{ r.username }}</div>
-              <div><b>Pass:</b> {{ r.password }}</div>
-              <div><b>Payload:</b> {{ r.payload }}</div>
-            {% else %}
-              {% for c in r.last_commands %}
-                <div class="cmd">{{ c }}</div>
-              {% endfor %}
-            {% endif %}
-
+            {% for c in r.last_commands %}
+              <div class="cmd">{{ c }}</div>
+            {% endfor %}
           </td>
         </tr>
         {% endfor %}
@@ -72,8 +88,11 @@
   </div>
 </div>
 
-<!-- SEARCH -->
+<!-- ===============================
+     SEARCH + EXPORT JS
+================================ -->
 <script>
+/* SEARCH */
 document.getElementById("searchInput").addEventListener("keyup", function () {
   const filter = this.value.toLowerCase();
   const rows = document.querySelectorAll("#honeypotTable tbody tr");
@@ -83,10 +102,8 @@ document.getElementById("searchInput").addEventListener("keyup", function () {
     row.style.display = ip.includes(filter) ? "" : "none";
   });
 });
-</script>
 
-<!-- EXPORT CSV -->
-<script>
+/* EXPORT CSV */
 function exportTable() {
   let csv = [];
   const rows = document.querySelectorAll("#honeypotTable tr");
@@ -110,7 +127,9 @@ function exportTable() {
 }
 </script>
 
-<!-- AUTO REFRESH -->
+<!-- ===============================
+     AUTO REFRESH TABLE
+================================ -->
 <script>
   setTimeout(() => {
     window.location.reload();

@@ -1,33 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
     <title>Welcome</title>
-
-    
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-
-    
-  <script src="https://unpkg.com/paper@0.12.15/dist/paper-full.min.js"></script>
 </head>
+<body>
+    <h1>Welcome to Ubuntu Server</h1>
+    <p>System status: OK</p>
 
-<body class="welcome">
-
-    <div id="money">$</div>
-
-    <canvas id="canvas"></canvas>
-
-    <div class="container">
-        <h1>Welcome To our Bank Server</h1>
-        <p class="status">System status: <span>OK</span></p>
-
-        
-        <a href="{{ url_for('admin') }}" class="btn">Admin Panel</a>
-    </div>
-
-     
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
-
+    <a href="/admin">Admin Panel</a>
 </body>
 </html>
-
