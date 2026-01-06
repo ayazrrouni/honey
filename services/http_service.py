@@ -1,3 +1,9 @@
+import logging
+
+# ========= SILENCE FLASK =========
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
+
 from flask import Flask, request, render_template, redirect
 import time
 import os
@@ -16,6 +22,7 @@ def log_attack(action, detail):
     os.makedirs("logs", exist_ok=True)
     with open(LOG_FILE, "a") as f:
         f.write(f"{time.ctime()} | HTTP | {action} | {detail}\n")
+
 
 # ========= ROUTES =========
 
@@ -110,6 +117,7 @@ SQL_PATTERNS = [
     r"('|--|;|/\*|\*/|or\s+1=1|union\s+select|select\s+.*from)",
 ]
 
+
 @app.route("/sql_login", methods=["GET", "POST"])
 def sql_login():
     error = None
@@ -149,5 +157,16 @@ def sql_login():
 
 # ========= START =========
 def start_http():
-    print("[+] HTTP Honeypot listening on port 80")
-    app.run(host="0.0.0.0", port=80, debug=False)
+    from utils.silence_flask import silence_flask
+    silence_flask()
+
+    logging.getLogger("HONEYPOT").info(
+        "HTTP service running on port 80"
+    )
+
+    app.run(
+        host="0.0.0.0",
+        port=80,
+        debug=False,
+        use_reloader=False
+    )
